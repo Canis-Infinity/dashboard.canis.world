@@ -3,20 +3,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { LogOut } from 'lucide-react';
-import { toast } from '@/components/ui/toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { NAVIGATION_GROUPS } from '@/config/navigation';
 import {
   Sidebar,
@@ -29,24 +17,22 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { logout } from '@/services/authService';
 
-export function AppSidebar(props) {
+export function AppSidebar({ onRequestLogout, ...props }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
 
-  async function handleLogout() {
-    try {
-      const result = await logout();
-      toast.success(result.message || '登出成功');
-    } catch {
-      toast.error('登出請求失敗，已清除本機登入資訊');
-    } finally {
-      localStorage.removeItem('token');
-      router.push('/login');
+  function handleLogoutRequest() {
+    if (isMobile) {
+      setOpenMobile(false);
+      window.setTimeout(() => onRequestLogout?.(), 320);
+      return;
     }
+
+    onRequestLogout?.();
   }
 
   return (
@@ -101,24 +87,10 @@ export function AppSidebar(props) {
         ))}
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="ghost" className="h-10 w-full justify-start gap-2 text-[15px] font-medium" aria-label="登出">
-              <LogOut className="size-4" />
-              <span className="group-data-[collapsible=icon]:hidden">登出</span>
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>確認登出？</AlertDialogTitle>
-              <AlertDialogDescription>登出後會清除目前登入資訊，並返回登入頁。</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction onClick={handleLogout}>登出</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button type="button" variant="ghost" className="h-10 w-full justify-start gap-2 text-[15px] font-medium" aria-label="登出" onClick={handleLogoutRequest}>
+          <LogOut className="size-4" />
+          <span className="group-data-[collapsible=icon]:hidden">登出</span>
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );
