@@ -8,10 +8,9 @@ Canis Den 專用後台，沿用 `iistw.com/admin` 的 Next.js standalone、Radix
 - Container: `dashboard_canis_world`
 - Backend API: 由同源 `/api/*` 代理到 backend `7344`
 
-瀏覽器不應直接連 `localhost:7344`。Docker 內由 Next.js rewrite 使用 server-only 位址連線：
+瀏覽器固定透過 dashboard 同源的 `/api/*` 存取 API，不接受公開環境變數改寫。Docker 內由 Next.js rewrite 使用 server-only 位址連線：
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=/
 INTERNAL_API_BASE_URL=http://host.docker.internal:7344
 ```
 

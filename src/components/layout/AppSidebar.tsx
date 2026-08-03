@@ -1,11 +1,24 @@
 // @ts-nocheck
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
+import { toast } from '@/components/ui/toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { NAVIGATION_GROUPS } from '@/config/navigation';
+import { logout } from '@/services/authService';
 import {
   Sidebar,
   SidebarContent,
@@ -21,23 +34,59 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 
-export function AppSidebar({ onRequestLogout, ...props }) {
-  const pathname = usePathname();
-  const { isMobile, setOpenMobile } = useSidebar();
+const MOBILE_LOGOUT_DIALOG_DELAY_MS = 350;
 
-  function handleLogoutRequest() {
+export function AppSidebar(props) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const logoutDialogTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (logoutDialogTimerRef.current) {
+        clearTimeout(logoutDialogTimerRef.current);
+      }
+    };
+  }, []);
+
+  function handleLogoutDialogOpen(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (isMobile) {
+      if (logoutDialogTimerRef.current) {
+        clearTimeout(logoutDialogTimerRef.current);
+      }
+
       setOpenMobile(false);
-      window.setTimeout(() => onRequestLogout?.(), 320);
+      logoutDialogTimerRef.current = setTimeout(() => {
+        setLogoutDialogOpen(true);
+        logoutDialogTimerRef.current = null;
+      }, MOBILE_LOGOUT_DIALOG_DELAY_MS);
       return;
     }
 
-    onRequestLogout?.();
+    setLogoutDialogOpen(true);
+  }
+
+  async function handleLogout() {
+    try {
+      const result = await logout();
+      toast.success(result.message || '登出成功');
+    } catch {
+      toast.error('登出請求失敗，已清除本機登入資訊');
+    } finally {
+      localStorage.removeItem('token');
+      router.push('/login');
+    }
   }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0">
+    <>
+      <Sidebar collapsible="icon" {...props}>
+        <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="h-10 gap-3 px-2" asChild>
@@ -61,8 +110,8 @@ export function AppSidebar({ onRequestLogout, ...props }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent className="px-2 py-4">
+        </SidebarHeader>
+        <SidebarContent className="px-2 py-4">
         {NAVIGATION_GROUPS.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
@@ -85,13 +134,26 @@ export function AppSidebar({ onRequestLogout, ...props }) {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-      </SidebarContent>
-      <SidebarFooter className="p-3 border-t border-sidebar-border">
-        <Button type="button" variant="ghost" className="h-10 w-full justify-start gap-2 text-[15px] font-medium" aria-label="登出" onClick={handleLogoutRequest}>
-          <LogOut className="size-4" />
-          <span className="group-data-[collapsible=icon]:hidden">登出</span>
-        </Button>
-      </SidebarFooter>
-    </Sidebar>
+        </SidebarContent>
+        <SidebarFooter className="p-3 border-t border-sidebar-border">
+          <Button type="button" variant="ghost" className="h-10 w-full justify-start gap-2 text-[15px] font-medium" aria-label="登出" onClick={handleLogoutDialogOpen}>
+            <LogOut className="size-4" />
+            <span className="group-data-[collapsible=icon]:hidden">登出</span>
+          </Button>
+        </SidebarFooter>
+      </Sidebar>
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認登出？</AlertDialogTitle>
+            <AlertDialogDescription>登出後會清除目前登入資訊，並返回登入頁。</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>登出</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
