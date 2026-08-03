@@ -1,0 +1,455 @@
+.wrapper {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  justify-content: flex-start;
+  align-items: flex-start;
+  overflow: auto;
+}
+
+.wrapper::-webkit-scrollbar {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.wrapper::-webkit-scrollbar-corner {
+  background-color: var(--scrollbar-track);
+  border-bottom-right-radius: 0.5rem;
+}
+
+.wrapper::-webkit-scrollbar-track {
+  border-radius: 0.5rem;
+  background-color: var(--scrollbar-track);
+}
+
+.wrapper::-webkit-scrollbar-thumb {
+  border-radius: 0.5rem;
+  background-color: var(--scrollbar-thumb);
+}
+
+.wrapper::-webkit-scrollbar-thumb:hover {
+  border-radius: 0.5rem;
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+.wrapper div.noData {
+  width: 100%;
+  height: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.5;
+}
+
+.wrapper div.noData svg {
+  font-size: 3rem;
+}
+
+.wrapper div.noData.loading svg {
+  -webkit-animation: svg-rotate 1s linear infinite;
+  animation: svg-rotate 1s linear infinite;
+}
+
+@keyframes svg-rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-webkit-keyframes svg-rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-moz-keyframes svg-rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-o-keyframes svg-rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.wrapper table {
+  width: 100%;
+  height: auto;
+  display: table;
+  border-collapse: collapse;
+  font-size: 1rem;
+  color: var(--font-color);
+}
+
+/* .wrapper table thead {
+  display: table-header-group;
+}
+
+.wrapper table tbody {
+  display: table-row-group;
+}
+
+.wrapper table tfoot {
+  display: table-footer-group;
+} */
+
+.wrapper table thead {
+  border-bottom: 3px solid var(--table-border);
+}
+
+.wrapper table thead tr,
+.wrapper table tbody tr,
+.wrapper table tfoot tr {
+  /* display: table-row; */
+  position: relative;
+}
+
+.wrapper table thead tr th,
+.wrapper table tbody tr td,
+.wrapper table tfoot tr th {
+  /* display: table-cell; */
+  position: relative;
+  line-height: 1.5;
+}
+
+.wrapper table tbody tr td.subject {
+  border-right: 2px solid var(--table-border);
+}
+
+.wrapper table thead tr th.isFixed,
+.wrapper table tbody tr td.isFixed {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.wrapper table tfoot {
+  border-top: 1px solid var(--table-border);
+}
+
+.wrapper table.selectable tbody tr,
+.wrapper table tbody tr.selectable {
+  cursor: pointer;
+}
+
+.wrapper table thead tr th,
+.wrapper table tbody tr td,
+.wrapper table tfoot tr th {
+  position: relative;
+  padding: 0.5rem 1rem;
+  vertical-align: middle;
+  transition: all 0.2s linear;
+  -webkit-transition: all 0.2s linear;
+}
+
+.wrapper table.relaxed thead tr th,
+.wrapper table.relaxed tbody tr td,
+.wrapper table.relaxed tfoot tr th {
+  padding: 1rem 1rem;
+}
+
+.wrapper table.narrow thead tr th,
+.wrapper table.narrow tbody tr td,
+.wrapper table.narrow tfoot tr th {
+  padding: 0.25rem 1rem;
+}
+
+.wrapper table thead tr th,
+.wrapper table tbody tr td {
+  background-color: var(--tbody);
+}
+
+.wrapper table thead tr th.alignLeft,
+.wrapper table tbody tr td.alignLeft,
+.wrapper table tfoot tr th.alignLeft {
+  text-align: start !important;
+}
+
+.wrapper table thead tr th.alignCenter,
+.wrapper table tbody tr td.alignCenter,
+.wrapper table tfoot tr th.alignCenter {
+  text-align: center !important;
+}
+
+.wrapper table thead tr th.alignCenter .actions,
+.wrapper table tbody tr td.alignCenter .actions,
+.wrapper table tfoot tr th.alignCenter .actions {
+  margin: auto;
+}
+
+.wrapper table thead tr th.alignRight,
+.wrapper table tbody tr td.alignRight,
+.wrapper table tfoot tr th.alignRight {
+  text-align: end !important;
+}
+
+.wrapper table thead tr th.fit,
+.wrapper table tbody tr td.fit,
+.wrapper table tfoot tr th.fit {
+  width: 1%;
+}
+
+.wrapper table thead tr th.nowrap,
+.wrapper table tbody tr td.nowrap,
+.wrapper table tfoot tr th.nowrap {
+  white-space: nowrap;
+}
+
+.wrapper table tbody tr td.increase {
+  color: var(--increase);
+}
+
+.wrapper table tbody tr td.decrease {
+  color: var(--decrease);
+}
+
+.wrapper table tbody tr td.isEmpty {
+  color: var(--gray-7);
+  font-weight: 600;
+}
+
+.wrapper table tbody tr td.isEmpty::after {
+  content: '-';
+  opacity: 0.8;
+}
+
+.wrapper table.striped thead tr th,
+.wrapper table.striped tbody tr td.subject {
+  background-color: var(--striped-thead);
+}
+
+.wrapper table tbody tr td.subject {
+  font-weight: bold;
+}
+
+.wrapper table thead tr th.mono,
+.wrapper table tbody tr td.mono {
+  text-align: end;
+  font-family: var(--mono-font);
+}
+
+.wrapper table.headerFixed thead tr th:first-child,
+.wrapper table.headerFixed tbody tr td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.actions {
+  width: max-content;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.actions button {
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  outline: 0;
+  border: 0;
+  cursor: pointer;
+  width: max-content;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 !important;
+  text-transform: uppercase;
+  font-size: 1rem;
+  line-height: 1;
+  font-family: inherit;
+  white-space: nowrap;
+  background-color: transparent;
+  color: var(--font-color);
+  -webkit-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+}
+
+.actions button:active {
+  opacity: 0.8;
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+}
+
+.actions button.primary:active  {
+  color: var(--theme-primary);
+}
+
+.actions button.warning:active  {
+  color: var(--red);
+}
+
+.actions button.success:active  {
+  color: var(--green);
+}
+
+.actions button svg {
+  scale: 1.25;
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+.badge {
+  width: max-content;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--font-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: calc((0.25rem + 0.25rem + 0.75rem) / 2);
+}
+
+.badge.web {
+  background-color: var(--theme-primary);
+}
+
+.badge.web::before {
+  content: '網頁';
+}
+
+.badge.tool {
+  background-color: var(--green-third);
+}
+
+.badge.tool::before {
+  content: '小工具';
+}
+
+.badge.uiux {
+  background-color: var(--decrease);
+}
+
+.badge.uiux::before {
+  content: 'UI/UX';
+}
+
+.badge.unread {
+  background-color: var(--decrease);
+}
+
+.badge.unread::before {
+  content: '未讀';
+}
+
+.badge.pending {
+  background-color: var(--theme-primary);
+}
+
+.badge.pending::before {
+  content: '佇列';
+}
+
+.badge.done {
+  background-color: var(--green-third);
+}
+
+.badge.done::before {
+  content: '完成';
+}
+
+/* Mobile */
+@media (max-width: 480px) {}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 760px) {}
+
+/* Large tablet */
+@media (min-width: 761px) and (max-width: 1440px) {
+  .wrapper table tbody tr:hover td {
+    background-color: var(--tr-hover);
+  }
+
+  .actions button:hover {
+    opacity: 0.9;
+  }
+
+  .actions button.primary:hover  {
+    color: var(--theme-primary);
+  }
+
+  .actions button.warning:hover  {
+    color: var(--red);
+  }
+
+  .actions button.success:hover  {
+    color: var(--green);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1441px) {
+  .wrapper table tbody tr:hover td {
+    background-color: var(--tr-hover);
+  }
+
+  .actions button:hover {
+    opacity: 0.9;
+  }
+
+  .actions button.primary:hover  {
+    color: var(--theme-primary);
+  }
+
+  .actions button.warning:hover  {
+    color: var(--red);
+  }
+
+  .actions button.success:hover  {
+    color: var(--green);
+  }
+}

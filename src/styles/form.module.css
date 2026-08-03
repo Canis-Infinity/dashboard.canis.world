@@ -1,0 +1,809 @@
+.group {
+  width: 100%;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.group.narrow {
+  gap: 0.5rem;
+}
+
+.group.narrow svg {
+  flex-shrink: 0;
+}
+
+.field {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field.fit {
+  width: max-content;
+}
+
+.field .fieldTitle {
+  width: 100%;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: capitalize;
+  /* margin-bottom: 0.5rem; */
+}
+
+.field .fieldTitle[data-optional]::after {
+  content: attr(data-optional);
+  font-size: 0.75rem;
+  line-height: 1;
+  width: max-content;
+  height: auto;
+  position: absolute;
+  right: 0;
+  color: var(--font-color);
+  background-color: var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: calc((0.75rem + 0.5rem + 0.5rem) / 2);
+}
+
+.field .iconInput {
+  width: 100%;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+}
+
+.field input,
+.field textarea,
+.field .iconInput select,
+.field .iconInput input {
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  border-radius: 0.5rem;
+  border: var(--border-size) solid var(--border-input);
+  color: var(--font-color);
+  background-color: var(--background-color);
+  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+  -webkit-transition: color 0.2s linear, border 0.2s linear, background-color 0.2s linear, opacity 0.2s linear;
+  transition: color 0.2s linear, border 0.2s linear, background-color 0.2s linear, opacity 0.2s linear;
+  outline: 0;
+}
+
+.field input,
+.field textarea,
+.field .iconInput input {
+  line-height: 1.5;
+}
+
+.field input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.field .iconInput select {
+  line-height: 1;
+}
+
+.field input[type="radio"],
+.field input[type="checkbox"] {
+  width: 0;
+  height: 0;
+}
+
+.field input,
+.field .iconInput select,
+.field .iconInput input {
+  height: calc(1rem + 0.5rem + 0.5rem + var(--border-size) + var(--border-size));
+}
+
+.field textarea {
+  height: auto;
+  resize: vertical;
+}
+
+.field input:disabled,
+.field textarea:disabled,
+.field .iconInput select:disabled,
+.field .iconInput input:disabled {
+  opacity: 0.5;
+}
+
+.field input:not(:disabled):focus-visible,
+.field textarea:not(:disabled):focus-visible,
+.field .iconInput select:not(:disabled):focus-visible,
+.field .iconInput input:not(:disabled):focus-visible {
+  border: var(--border-size) solid var(--theme-primary);
+}
+
+.field .iconInput select,
+.field .iconInput input {
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+}
+
+.field .iconInput select {
+  cursor: pointer;
+}
+
+.field.fit .iconInput select {
+  width: max-content;
+}
+
+.field .iconInput svg {
+  font-size: 1rem;
+  line-height: 1;
+  position: absolute;
+  right: 1rem;
+  -webkit-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+  pointer-events: none;
+}
+
+.field .iconInput select:disabled~svg
+.field .iconInput input:disabled~svg {
+  opacity: 0.5;
+}
+
+.field .iconInput select:not(:disabled):focus-visible~svg,
+.field .iconInput input:not(:disabled):focus-visible~svg {
+  color: var(--theme-primary);
+}
+
+.field .inputs {
+  width: 100%;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.field .inputs.password svg {
+  font-size: 1rem;
+  line-height: 1;
+  position: absolute;
+  right: 1rem;
+  cursor: pointer;
+  -webkit-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+}
+
+.field .inputs.password input {
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+}
+
+.field .inputs.password input:focus~svg,
+.field .inputs.password input:focus-visible~svg {
+  color: var(--theme-primary);
+}
+
+.radio,
+.checkbox {
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+}
+
+.radio+label,
+.checkbox+label {
+  width: 100%;
+  height: calc(1rem + 0.5rem + 0.5rem + var(--border-size) + var(--border-size));
+  border: var(--border-size) solid var(--background-color);
+  -webkit-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+  cursor: pointer;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--font-color);
+  background-color: var(--background-color);
+  padding: 0.5rem 0.75rem;
+}
+
+.radio+label.alignLeft,
+.checkbox+label.alignLeft {
+  justify-content: flex-start;
+}
+
+.radio:disabled+label,
+.checkbox:disabled+label {
+  border: var(--border-size) solid var(--background-color);
+  color: var(--font-color);
+  background-color: var(--background-color);
+  opacity: 0.5;
+}
+
+.radio:not(:disabled):not(:checked):focus-visible+label,
+.checkbox:not(:disabled):not(:checked):focus-visible+label {
+  border: var(--border-size) solid var(--theme-primary);
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
+.radio:not(:disabled):checked:focus-visible+label,
+.checkbox:not(:disabled):checked:focus-visible+label {
+  border: var(--border-size) solid var(--theme-secondary);
+  color: var(--gray-3);
+  background-color: var(--theme-primary);
+}
+
+.radio:checked+label,
+.checkbox:checked+label {
+  border: var(--border-size) solid var(--theme-primary);
+  color: var(--gray-3);
+  background-color: var(--theme-primary);
+}
+
+.radio:checked:active+label,
+.checkbox:checked:active+label {
+  border: var(--border-size) solid var(--theme-primary);
+  color: var(--gray-3);
+  background-color: var(--theme-primary);
+  opacity: 0.8;
+}
+
+.radio+label.success,
+.checkbox+label.success {
+  border: var(--border-size) solid var(--background-color);
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
+.radio:disabled+label.success,
+.checkbox:disabled+label.success {
+  border: var(--border-size) solid var(--background-color);
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
+.radio:not(:disabled):not(:checked):focus-visible+label.success,
+.checkbox:not(:disabled):not(:checked):focus-visible+label.success {
+  border: var(--border-size) solid var(--theme-primary);
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
+.radio:not(:disabled):checked:focus-visible+label.success,
+.checkbox:not(:disabled):checked:focus-visible+label.success {
+  border: var(--border-size) solid var(--green-third);
+  color: var(--gray-3);
+  background-color: var(--increase);
+}
+
+.radio:checked+label.success,
+.checkbox:checked+label.success {
+  border: var(--border-size) solid var(--increase);
+  color: var(--gray-3);
+  background-color: var(--increase);
+}
+
+.radio:checked:active+label.success,
+.checkbox:checked:active+label.success {
+  border: var(--border-size) solid var(--increase);
+  color: var(--gray-3);
+  background-color: var(--increase);
+}
+
+.radio+label.fail,
+.checkbox+label.fail {
+  border: var(--border-size) solid var(--background-color);
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
+.radio:disabled+label.fail,
+.checkbox:disabled+label.fail {
+  border: var(--border-size) solid var(--background-color);
+  color: var(--font-color);
+  background-color: var(--background-color);
+}
+
+.radio:not(:disabled):not(:checked):focus-visible+label.fail,
+.checkbox:not(:disabled):not(:checked):focus-visible+label.fail {
+  border: var(--border-size) solid var(--theme-primary);
+  color: var(--font-color);
+  background-color: var(--decrease);
+}
+
+.radio:not(:disabled):checked:focus-visible+label.fail,
+.checkbox:not(:disabled):checked:focus-visible+label.fail {
+  border: var(--border-size) solid var(--red-secondary);
+  color: var(--gray-3);
+  background-color: var(--decrease);
+}
+
+.radio:checked+label.fail,
+.checkbox:checked+label.fail {
+  border: var(--border-size) solid var(--decrease);
+  color: var(--gray-3);
+  background-color: var(--decrease);
+}
+
+.radio:checked:active+label.fail,
+.checkbox:checked:active+label.fail {
+  border: var(--border-size) solid var(--decrease);
+  color: var(--gray-3);
+  background-color: var(--decrease);
+}
+
+.radio+label::before,
+.checkbox+label::before {
+  font-family: 'remixicon';
+}
+
+.radio:not(:checked)+label::before {
+  content: '\EB7D';
+}
+
+.radio:checked+label::before {
+  content: '\EB81';
+}
+
+.checkbox:not(:checked)+label::before {
+  content: '\EB7F';
+}
+
+.checkbox:checked+label::before {
+  content: '\EB85';
+}
+
+.radio:checked+label a,
+.checkbox:checked+label a {
+  color: var(--gray-3);
+}
+
+.field .description {
+  width: 100%;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--font-color2);
+  font-size: 0.75rem;
+}
+
+.field .description svg {
+  translate: 0 0.25rem;
+  scale: 1.25;
+  transform-origin: left center;
+}
+
+.field .description p {
+  text-align: start;
+  font-size: 0.75rem;
+}
+
+.actions {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: row-reverse;
+  position: relative;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.actions.column {
+  flex-direction: column;
+}
+
+.actions button[type="button"],
+.actions button[type="submit"],
+.actions button[type="reset"],
+.actions input[type="submit"],
+.actions input[type="reset"] {
+  outline: 0;
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  -webkit-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+  cursor: pointer;
+  width: max-content;
+  height: auto;
+  min-height: calc(1rem + 0.5rem + 0.5rem + var(--border-size) + var(--border-size));
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  text-transform: uppercase;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.actions button[type="button"].flex,
+.actions button[type="submit"].flex,
+.actions button[type="reset"].flex,
+.actions input[type="submit"].flex,
+.actions input[type="reset"].flex {
+  width: 100%;
+}
+
+.actions button[type="button"]:not(:disabled):active,
+.actions button[type="submit"]:not(:disabled):active,
+.actions button[type="reset"]:not(:disabled):active,
+.actions input[type="submit"]:not(:disabled):active,
+.actions input[type="reset"]:not(:disabled):active {
+  opacity: 0.8;
+}
+
+.actions button[type="button"]:disabled,
+.actions button[type="submit"]:disabled,
+.actions button[type="reset"]:disabled,
+.actions input[type="submit"]:disabled,
+.actions input[type="reset"]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.actions button[type="button"].primary,
+.actions button[type="submit"].primary,
+.actions button[type="reset"].primary,
+.actions input[type="submit"].primary,
+.actions input[type="reset"].primary {
+  background-color: var(--theme-primary);
+  color: var(--gray-3);
+  border: var(--border-size) solid var(--theme-primary);
+}
+
+.actions button[type="button"].primary:not(:disabled):active,
+.actions button[type="submit"].primary:not(:disabled):active,
+.actions button[type="reset"].primary:not(:disabled):active,
+.actions input[type="submit"].primary:not(:disabled):active,
+.actions input[type="reset"].primary:not(:disabled):active {
+  background-color: var(--theme-primary);
+  color: var(--gray-3);
+  border: var(--border-size) solid var(--theme-primary);
+}
+
+.actions button[type="button"].primary:not(:disabled):focus-visible,
+.actions button[type="submit"].primary:not(:disabled):focus-visible,
+.actions button[type="reset"].primary:not(:disabled):focus-visible,
+.actions input[type="submit"].primary:not(:disabled):focus-visible,
+.actions input[type="reset"].primary:not(:disabled):focus-visible {
+  background-color: var(--theme-primary);
+  color: var(--gray-3);
+  border: var(--border-size) solid var(--theme-secondary);
+}
+
+.actions button[type="button"].secondary,
+.actions button[type="submit"].secondary,
+.actions button[type="reset"].secondary,
+.actions input[type="submit"].secondary,
+.actions input[type="reset"].secondary {
+  background-color: var(--background-color);
+  color: var(--font-color);
+  border: var(--border-size) solid var(--background-color);
+}
+
+.actions button[type="button"].secondary:not(:disabled):active,
+.actions button[type="submit"].secondary:not(:disabled):active,
+.actions button[type="reset"].secondary:not(:disabled):active,
+.actions input[type="submit"].secondary:not(:disabled):active,
+.actions input[type="reset"].secondary:not(:disabled):active {
+  background-color: var(--background-color);
+  color: var(--font-color);
+  border: var(--border-size) solid var(--background-color);
+}
+
+.actions button[type="button"].secondary:not(:disabled):focus-visible,
+.actions button[type="submit"].secondary:not(:disabled):focus-visible,
+.actions button[type="reset"].secondary:not(:disabled):focus-visible,
+.actions input[type="submit"].secondary:not(:disabled):focus-visible,
+.actions input[type="reset"].secondary:not(:disabled):focus-visible {
+  background-color: var(--background-color);
+  color: var(--font-color);
+  border: var(--border-size) solid var(--border);
+}
+
+.actions button[type="button"].third,
+.actions button[type="submit"].third,
+.actions button[type="reset"].third,
+.actions input[type="submit"].third,
+.actions input[type="reset"].third {
+  background-color: var(--hover);
+  color: var(--font-color);
+  border: var(--border-size) solid var(--hover);
+}
+
+.actions button[type="button"].third:not(:disabled):active,
+.actions button[type="submit"].third:not(:disabled):active,
+.actions button[type="reset"].third:not(:disabled):active,
+.actions input[type="submit"].third:not(:disabled):active,
+.actions input[type="reset"].third:not(:disabled):active {
+  background-color: var(--hover);
+  color: var(--font-color);
+  border: var(--border-size) solid var(--hover);
+}
+
+.actions button[type="button"].third:not(:disabled):focus-visible,
+.actions button[type="submit"].third:not(:disabled):focus-visible,
+.actions button[type="reset"].third:not(:disabled):focus-visible,
+.actions input[type="submit"].third:not(:disabled):focus-visible,
+.actions input[type="reset"].third:not(:disabled):focus-visible {
+  background-color: var(--hover);
+  color: var(--font-color);
+  border: var(--border-size) solid var(--border);
+}
+
+.actions button[type="button"].warning,
+.actions button[type="submit"].warning,
+.actions button[type="reset"].warning,
+.actions input[type="submit"].warning,
+.actions input[type="reset"].warning {
+  background-color: var(--red);
+  color: var(--gray-3);
+  border: var(--border-size) solid var(--red);
+}
+
+.actions button[type="button"].warning:not(:disabled):active,
+.actions button[type="submit"].warning:not(:disabled):active,
+.actions button[type="reset"].warning:not(:disabled):active,
+.actions input[type="submit"].warning:not(:disabled):active,
+.actions input[type="reset"].warning:not(:disabled):active {
+  background-color: var(--red);
+  color: var(--gray-3);
+  border: var(--border-size) solid var(--red);
+}
+
+.actions button[type="button"].warning:not(:disabled):focus-visible,
+.actions button[type="submit"].warning:not(:disabled):focus-visible,
+.actions button[type="reset"].warning:not(:disabled):focus-visible,
+.actions input[type="submit"].warning:not(:disabled):focus-visible,
+.actions input[type="reset"].warning:not(:disabled):focus-visible {
+  background-color: var(--red);
+  color: var(--gray-3);
+  border: var(--border-size) solid var(--border);
+}
+
+/* Mobile */
+@media (max-width: 480px) {}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 760px) {}
+
+/* Large tablet */
+@media (min-width: 761px) and (max-width: 1440px) {
+
+  .field input:not(:disabled):hover,
+  .field textarea:not(:disabled):hover,
+  .field .selectInput select:not(:disabled):hover {
+    opacity: 0.9;
+  }
+
+  .field .selectInput select:not(:disabled):hover~svg {
+    opacity: 0.9;
+  }
+
+  .radio:not(:disabled):hover+label,
+  .checkbox:not(:disabled):hover+label {
+    border: var(--border-size) solid var(--hover);
+    color: var(--font-color);
+    background-color: var(--hover);
+  }
+
+  .radio:checked:hover+label,
+  .checkbox:checked:hover+label {
+    border: var(--border-size) solid var(--theme-primary);
+    color: var(--gray-3);
+    background-color: var(--theme-primary);
+    opacity: 0.9;
+  }
+
+  .radio:not(:disabled):hover+label.success,
+  .checkbox:not(:disabled):hover+label.success {
+    border: var(--border-size) solid var(--hover);
+    color: var(--font-color);
+    background-color: var(--hover);
+  }
+
+  .radio:checked:hover+label.success,
+  .checkbox:checked:hover+label.success {
+    border: var(--border-size) solid var(--increase);
+    color: var(--gray-3);
+    background-color: var(--increase);
+    opacity: 0.9;
+  }
+
+  .radio:not(:disabled):hover+label.fail,
+  .checkbox:not(:disabled):hover+label.fail {
+    border: var(--border-size) solid var(--hover);
+    color: var(--font-color);
+    background-color: var(--hover);
+  }
+
+  .radio:checked:hover+label.fail,
+  .checkbox:checked:hover+label.fail {
+    border: var(--border-size) solid var(--decrease);
+    color: var(--gray-3);
+    background-color: var(--decrease);
+    opacity: 0.9;
+  }
+
+  .actions button[type="button"]:not(:disabled):hover,
+  .actions button[type="submit"]:not(:disabled):hover,
+  .actions button[type="reset"]:not(:disabled):hover,
+  .actions input[type="submit"]:not(:disabled):hover,
+  .actions input[type="reset"]:not(:disabled):hover {
+    opacity: 0.9;
+  }
+
+  .actions button[type="button"].primary:not(:disabled):hover,
+  .actions button[type="submit"].primary:not(:disabled):hover,
+  .actions button[type="reset"].primary:not(:disabled):hover,
+  .actions input[type="submit"].primary:not(:disabled):hover,
+  .actions input[type="reset"].primary:not(:disabled):hover {
+    background-color: var(--theme-primary);
+    color: var(--gray-3);
+    border: var(--border-size) solid var(--theme-primary);
+  }
+
+  .actions button[type="button"].secondary:not(:disabled):hover,
+  .actions button[type="submit"].secondary:not(:disabled):hover,
+  .actions button[type="reset"].secondary:not(:disabled):hover,
+  .actions input[type="submit"].secondary:not(:disabled):hover,
+  .actions input[type="reset"].secondary:not(:disabled):hover {
+    background-color: var(--background-color);
+    color: var(--font-color);
+    border: var(--border-size) solid var(--background-color);
+  }
+
+  .actions button[type="button"].third:not(:disabled):hover,
+  .actions button[type="submit"].third:not(:disabled):hover,
+  .actions button[type="reset"].third:not(:disabled):hover,
+  .actions input[type="submit"].third:not(:disabled):hover,
+  .actions input[type="reset"].third:not(:disabled):hover {
+    background-color: var(--hover);
+    color: var(--font-color);
+    border: var(--border-size) solid var(--hover);
+  }
+
+  .actions button[type="button"].warning:not(:disabled):hover,
+  .actions button[type="submit"].warning:not(:disabled):hover,
+  .actions button[type="reset"].warning:not(:disabled):hover,
+  .actions input[type="submit"].warning:not(:disabled):hover,
+  .actions input[type="reset"].warning:not(:disabled):hover {
+    background-color: var(--red);
+    color: var(--gray-3);
+    border: var(--border-size) solid var(--red);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1441px) {
+
+  .field input:not(:disabled):hover,
+  .field textarea:not(:disabled):hover,
+  .field .selectInput select:not(:disabled):hover {
+    opacity: 0.9;
+  }
+
+  .field .selectInput select:not(:disabled):hover~svg {
+    opacity: 0.9;
+  }
+
+  .radio:not(:disabled):hover+label,
+  .checkbox:not(:disabled):hover+label {
+    border: var(--border-size) solid var(--hover);
+    color: var(--font-color);
+    background-color: var(--hover);
+  }
+
+  .radio:checked:hover+label,
+  .checkbox:checked:hover+label {
+    border: var(--border-size) solid var(--theme-primary);
+    color: var(--gray-3);
+    background-color: var(--theme-primary);
+    opacity: 0.9;
+  }
+
+  .radio:not(:disabled):hover+label.success,
+  .checkbox:not(:disabled):hover+label.success {
+    border: var(--border-size) solid var(--hover);
+    color: var(--font-color);
+    background-color: var(--hover);
+  }
+
+  .radio:checked:hover+label.success,
+  .checkbox:checked:hover+label.success {
+    border: var(--border-size) solid var(--increase);
+    color: var(--gray-3);
+    background-color: var(--increase);
+    opacity: 0.9;
+  }
+
+  .radio:not(:disabled):hover+label.fail,
+  .checkbox:not(:disabled):hover+label.fail {
+    border: var(--border-size) solid var(--hover);
+    color: var(--font-color);
+    background-color: var(--hover);
+  }
+
+  .radio:checked:hover+label.fail,
+  .checkbox:checked:hover+label.fail {
+    border: var(--border-size) solid var(--decrease);
+    color: var(--gray-3);
+    background-color: var(--decrease);
+    opacity: 0.9;
+  }
+
+  .actions button[type="button"]:not(:disabled):hover,
+  .actions button[type="submit"]:not(:disabled):hover,
+  .actions button[type="reset"]:not(:disabled):hover,
+  .actions input[type="submit"]:not(:disabled):hover,
+  .actions input[type="reset"]:not(:disabled):hover {
+    opacity: 0.9;
+  }
+
+  .actions button[type="button"].primary:not(:disabled):hover,
+  .actions button[type="submit"].primary:not(:disabled):hover,
+  .actions button[type="reset"].primary:not(:disabled):hover,
+  .actions input[type="submit"].primary:not(:disabled):hover,
+  .actions input[type="reset"].primary:not(:disabled):hover {
+    background-color: var(--theme-primary);
+    color: var(--gray-3);
+    border: var(--border-size) solid var(--theme-primary);
+  }
+
+  .actions button[type="button"].secondary:not(:disabled):hover,
+  .actions button[type="submit"].secondary:not(:disabled):hover,
+  .actions button[type="reset"].secondary:not(:disabled):hover,
+  .actions input[type="submit"].secondary:not(:disabled):hover,
+  .actions input[type="reset"].secondary:not(:disabled):hover {
+    background-color: var(--background-color);
+    color: var(--font-color);
+    border: var(--border-size) solid var(--background-color);
+  }
+
+  .actions button[type="button"].third:not(:disabled):hover,
+  .actions button[type="submit"].third:not(:disabled):hover,
+  .actions button[type="reset"].third:not(:disabled):hover,
+  .actions input[type="submit"].third:not(:disabled):hover,
+  .actions input[type="reset"].third:not(:disabled):hover {
+    background-color: var(--hover);
+    color: var(--font-color);
+    border: var(--border-size) solid var(--hover);
+  }
+
+  .actions button[type="button"].warning:not(:disabled):hover,
+  .actions button[type="submit"].warning:not(:disabled):hover,
+  .actions button[type="reset"].warning:not(:disabled):hover,
+  .actions input[type="submit"].warning:not(:disabled):hover,
+  .actions input[type="reset"].warning:not(:disabled):hover {
+    background-color: var(--red);
+    color: var(--gray-3);
+    border: var(--border-size) solid var(--red);
+  }
+}

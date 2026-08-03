@@ -1,0 +1,48 @@
+.loginForm {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--background-color2);
+}
+
+.header {
+  width: 100%;
+  height: auto;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  max-height: 2rem;
+  width: auto;
+  max-width: 100%;
+}
+
+/* Mobile */
+@media (max-width: 480px) {}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 760px) {}
+
+/* Large tablet */
+@media (min-width: 761px) and (max-width: 1440px) {
+  .loginForm {
+    max-width: 500px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1441px) {
+  .loginForm {
+    max-width: 500px;
+  }
+}
