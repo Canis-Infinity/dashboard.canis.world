@@ -15,7 +15,7 @@ services:
       - .:/app
       - dashboard-node-modules:/app/node_modules
       - dashboard-next:/app/.next
-    command: sh -c "npm ci --legacy-peer-deps --include=dev && npm run build && rm -rf .next/standalone/public .next/standalone/.next/static && mkdir -p .next/standalone/.next && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static && node .next/standalone/server.js"
+    command: sh -c "npm ci --legacy-peer-deps --include=dev && find .next -mindepth 1 -maxdepth 1 -exec rm -rf {} + && npm run build && rm -rf .next/standalone/public .next/standalone/.next/static && mkdir -p .next/standalone/.next && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static && node .next/standalone/server.js"
     ports:
       - "7343:7343"
     restart: unless-stopped
