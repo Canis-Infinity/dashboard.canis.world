@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RotateCcw, Save } from 'lucide-react';
 import DashboardShell from '@/components/layout/DashboardShell';
 import { FileUploadField } from '@/components/shared/FileUploadField';
@@ -102,7 +102,6 @@ function LocaleFields({ locale, value, onChange }) {
   return (
     <div className="grid gap-5 pt-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field id={`${locale}-name`} label="顯示名稱" value={value?.name} onChange={(next) => update('name', next)} required />
         <Field id={`${locale}-handle`} label="帳號標示" value={value?.handle} onChange={(next) => update('handle', next)} required />
         <Field id={`${locale}-title`} label="頁面標題" value={value?.title} onChange={(next) => update('title', next)} required />
         <Field id={`${locale}-badge`} label="品牌短標" value={value?.badge} onChange={(next) => update('badge', next)} required />
@@ -111,12 +110,18 @@ function LocaleFields({ locale, value, onChange }) {
         <Label htmlFor={`${locale}-description`}>個人介紹</Label>
         <Textarea id={`${locale}-description`} value={value?.description || ''} onChange={(event) => update('description', event.target.value)} className="min-h-28" required />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field id={`${locale}-metadata-title`} label="搜尋結果標題" value={value?.metadataTitle} onChange={(next) => update('metadataTitle', next)} required />
-        <div className="grid gap-2 md:col-span-2">
-          <Label htmlFor={`${locale}-metadata-description`}>搜尋結果描述</Label>
-          <Textarea id={`${locale}-metadata-description`} value={value?.metadataDescription || ''} onChange={(event) => update('metadataDescription', event.target.value)} className="min-h-24" required />
-        </div>
+    </div>
+  );
+}
+
+function MetadataFields({ locale, value, onChange }) {
+  const update = (key, nextValue) => onChange({ ...value, [key]: nextValue });
+  return (
+    <div className="grid gap-5 pt-4">
+      <Field id={`${locale}-metadata-title`} label="搜尋結果標題" value={value?.metadataTitle} onChange={(next) => update('metadataTitle', next)} required />
+      <div className="grid gap-2">
+        <Label htmlFor={`${locale}-metadata-description`}>搜尋結果描述</Label>
+        <Textarea id={`${locale}-metadata-description`} value={value?.metadataDescription || ''} onChange={(event) => update('metadataDescription', event.target.value)} className="min-h-24" required />
       </div>
     </div>
   );
@@ -130,6 +135,7 @@ export default function ProfilePage() {
   });
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const formRef = useRef(null);
 
   useEffect(() => {
     if (data) setForm(cleanProfile(data));
@@ -143,6 +149,7 @@ export default function ProfilePage() {
 
   async function handleSave(event) {
     event.preventDefault();
+    if (saving) return;
     setSaving(true);
     try {
       let payload = form;
@@ -162,11 +169,23 @@ export default function ProfilePage() {
     }
   }
 
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        formRef.current?.requestSubmit();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <DashboardShell title="個人資料" description="管理 Canis Den 前台顯示的品牌資訊、聯絡方式與雙語內容。">
       {error ? <Alert variant="destructive"><AlertTitle>讀取失敗</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
       {loading || !form ? <ProfilePageSkeleton /> : (
-        <form className="grid gap-6" onSubmit={handleSave}>
+        <form ref={formRef} className="grid gap-6" onSubmit={handleSave}>
           <Card>
             <CardHeader className="px-4 sm:px-6"><CardTitle>站台設定</CardTitle><CardDescription>上傳前台頭像，並設定公開 Email 與正式網址。</CardDescription></CardHeader>
             <CardContent className="grid items-start gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(20rem,0.8fr)_minmax(22rem,1.2fr)]">
@@ -179,12 +198,23 @@ export default function ProfilePage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>前台文案</CardTitle><CardDescription>分別維護繁體中文與英文版本，搜尋結果資訊也在這裡設定。</CardDescription></CardHeader>
+            <CardHeader><CardTitle>前台文案</CardTitle><CardDescription>分別維護繁體中文與英文版本。</CardDescription></CardHeader>
             <CardContent>
               <Tabs defaultValue="zh-TW">
                 <TabsList><TabsTrigger value="zh-TW">繁體中文</TabsTrigger><TabsTrigger value="en">English</TabsTrigger></TabsList>
                 <TabsContent value="zh-TW"><LocaleFields locale="zh-TW" value={form.profile?.['zh-TW']} onChange={(value) => updateLocale('zh-TW', value)} /></TabsContent>
                 <TabsContent value="en"><LocaleFields locale="en" value={form.profile?.en} onChange={(value) => updateLocale('en', value)} /></TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Metadata</CardTitle><CardDescription>設定搜尋結果與社群分享會使用的標題與描述。</CardDescription></CardHeader>
+            <CardContent>
+              <Tabs defaultValue="zh-TW">
+                <TabsList><TabsTrigger value="zh-TW">繁體中文</TabsTrigger><TabsTrigger value="en">English</TabsTrigger></TabsList>
+                <TabsContent value="zh-TW"><MetadataFields locale="zh-TW" value={form.profile?.['zh-TW']} onChange={(value) => updateLocale('zh-TW', value)} /></TabsContent>
+                <TabsContent value="en"><MetadataFields locale="en" value={form.profile?.en} onChange={(value) => updateLocale('en', value)} /></TabsContent>
               </Tabs>
             </CardContent>
           </Card>
