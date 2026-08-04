@@ -9,7 +9,7 @@ import '@/styles/globals.css';
 
 export const metadata = {
   metadataBase: new URL('https://dashboard.canis.world'),
-  title: 'Canis Den 後台',
+  title: '後台｜Canis Den',
   description: 'Canis Den 網站後台',
   manifest: "/manifest.json",
   icons: {
@@ -20,7 +20,7 @@ export const metadata = {
     apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "512x512" }],
   },
   keywords: [
-    'Canis Den 後台',
+    '後台｜Canis Den',
     '電腦',
     '筆電',
     '零組件',
@@ -40,21 +40,21 @@ export const metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Canis Den 後台',
+    title: '後台｜Canis Den',
     url: 'https://dashboard.canis.world/',
-    siteName: 'Canis Den 後台',
+    siteName: '後台｜Canis Den',
     description: 'Canis Den 網站後台',
     type: 'website',
     locale: 'zh_TW',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Canis Den 後台',
+    title: '後台｜Canis Den',
     description: 'Canis Den 網站後台',
-    creator: 'Canis Den 後台',
+    creator: '後台｜Canis Den',
   },
   appleWebApp: {
-    title: 'Canis Den 後台',
+    title: '後台｜Canis Den',
     statusBarStyle: 'black-translucent',
   },
   robots: {
