@@ -837,19 +837,19 @@ export default function CanisWorldPage() {
       )}
 
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="grid max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0">
-          <DialogHeader className="px-6 pt-6">
+        <DialogContent className="grid max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 max-sm:left-0 max-sm:top-0 max-sm:h-svh max-sm:max-h-svh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0">
+          <DialogHeader className="min-w-0 px-4 pt-4 pr-12 text-left sm:px-6 sm:pt-6">
             <DialogTitle>{editingId ? "編輯日常" : "新增日常"}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-pretty">
               管理日常文字、分類、照片與公開狀態。
             </DialogDescription>
           </DialogHeader>
           <form
             ref={editorFormRef}
             onSubmit={applyDraft}
-            className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
+            className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
           >
-            <div className="grid min-h-0 gap-5 overflow-y-auto px-6 py-5">
+            <div className="grid min-h-0 min-w-0 gap-5 overflow-y-auto px-4 py-5 sm:px-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
                   id="entry-title"
@@ -924,11 +924,11 @@ export default function CanisWorldPage() {
                 </div>
 
                 {draft.images?.length ? (
-                  <div className="grid gap-3 lg:grid-cols-2">
+                  <div className="grid min-w-0 gap-3 lg:grid-cols-2">
                     {draft.images.map((path, index) => (
                       <div
                         key={`${path}-${index}`}
-                        className="overflow-hidden rounded-lg border bg-muted/20"
+                        className="min-w-0 overflow-hidden rounded-lg border bg-muted/20"
                       >
                         <div
                           role="img"
@@ -1021,19 +1021,22 @@ export default function CanisWorldPage() {
                   </Label>
                 )}
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="grid min-w-0 gap-2 sm:flex sm:items-center sm:gap-3">
                   <Button
-                    type="button"
                     variant="outline"
-                    asChild
+                    nativeButton={false}
+                    render={
+                      <Label
+                        htmlFor="media-upload"
+                        className="w-full cursor-pointer sm:w-fit"
+                      />
+                    }
                     disabled={mutating}
                   >
-                    <Label htmlFor="media-upload" className="cursor-pointer">
-                      <ImagePlus className="size-4" />
-                      {draft.images?.length ? "新增照片" : "選擇照片"}
-                    </Label>
+                    <ImagePlus className="size-4" />
+                    {draft.images?.length ? "新增照片" : "選擇照片"}
                   </Button>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="min-w-0 text-xs leading-5 text-muted-foreground">
                     可一次選取多張，上方順序會同步到前台。
                   </span>
                   <Input
@@ -1068,7 +1071,7 @@ export default function CanisWorldPage() {
                 </Label>
               </div>
             </div>
-            <DialogFooter className="border-t px-6 py-4">
+            <DialogFooter className="border-t px-4 py-4 sm:px-6">
               <DialogClose asChild>
                 <Button type="button" variant="outline" disabled={mutating}>
                   取消
