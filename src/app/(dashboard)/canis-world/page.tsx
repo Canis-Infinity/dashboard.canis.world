@@ -3,8 +3,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  Check,
   ImageIcon,
   ImagePlus,
   Pencil,
@@ -27,6 +30,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import {
   Dialog,
@@ -39,6 +50,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Field as CheckboxField,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -91,6 +108,28 @@ const managementSections = [
   { value: "entries", label: "日常紀錄" },
 ];
 
+const baseCategoryOptions = [
+  "日常",
+  "出遊",
+  "基地生活",
+  "照片",
+  "創作",
+  "活動",
+  "紀錄",
+  "daily",
+];
+
+const baseMoodOptions = [
+  "開心",
+  "安靜",
+  "放鬆",
+  "興奮",
+  "有點累",
+  "想睡",
+  "專注",
+  "慢慢整理",
+];
+
 function normalizeEntry(entry = emptyEntry) {
   return {
     ...emptyEntry,
@@ -124,11 +163,64 @@ function imageName(path) {
   }
 }
 
+function stripEntryMeta(entry) {
+  const { _id, createdAt, updatedAt, tagsText, ...payload } = entry;
+  return payload;
+}
+
+function EntryOrderButtons({ entry, entries, onMove, disabled }) {
+  const index = entries.findIndex((current) => current._id === entry._id);
+
+  return (
+    <div className="flex gap-1">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="日常紀錄往上移"
+            disabled={disabled || index <= 0}
+            onClick={() => onMove(entry, -1)}
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>往上移</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="日常紀錄往下移"
+            disabled={disabled || index < 0 || index >= entries.length - 1}
+            onClick={() => onMove(entry, 1)}
+          >
+            <ArrowDown className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>往下移</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
 function splitList(value, separator = ",") {
   return String(value || "")
     .split(separator)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function uniqueOptions(baseOptions, entries, key) {
+  return Array.from(
+    new Set([
+      ...baseOptions,
+      ...entries.map((entry) => entry?.[key]).filter(Boolean),
+    ])
+  );
 }
 
 function Field({
@@ -149,6 +241,41 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         required={required}
       />
+    </div>
+  );
+}
+
+function SuggestionCombobox({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+}) {
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Combobox
+        items={options}
+        value={value || null}
+        inputValue={value || ""}
+        onValueChange={(nextValue) => onChange(nextValue || "")}
+        onInputValueChange={(nextValue) => onChange(nextValue)}
+        autoHighlight="always"
+      >
+        <ComboboxInput id={id} placeholder={placeholder} />
+        <ComboboxContent>
+          <ComboboxEmpty>沒有符合的選項，可直接輸入新值。</ComboboxEmpty>
+          <ComboboxList>
+            {(item) => (
+              <ComboboxItem key={item} value={item}>
+                {item}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
     </div>
   );
 }
@@ -400,6 +527,71 @@ export default function CanisWorldPage() {
       ),
     [entries],
   );
+  const publishedEntries = useMemo(
+    () => sortedEntries.filter((entry) => entry.published),
+    [sortedEntries],
+  );
+  const heroSourceEntry = useMemo(() => {
+    const selectedId = settings?.content?.heroEntryId;
+    return (
+      publishedEntries.find((entry) => entry._id === selectedId) ||
+      publishedEntries.find((entry) => entry.featured) ||
+      publishedEntries[0]
+    );
+  }, [publishedEntries, settings?.content?.heroEntryId]);
+  const heroImageOptions = heroSourceEntry?.images || [];
+  const selectedHeroImage = heroImageOptions.includes(
+    settings?.content?.heroImage,
+  )
+    ? settings.content.heroImage
+    : heroImageOptions[0] || "";
+
+  function selectHeroEntry(value) {
+    if (!value) return;
+    const heroEntryId = value === "__featured__" ? "" : value;
+    const nextEntry =
+      publishedEntries.find((entry) => entry._id === heroEntryId) ||
+      publishedEntries.find((entry) => entry.featured) ||
+      publishedEntries[0];
+
+    setSettings((current) => ({
+      ...current,
+      content: {
+        ...current.content,
+        heroEntryId,
+        heroImage: nextEntry?.images?.[0] || "",
+      },
+    }));
+  }
+
+  async function moveEntry(entry, direction) {
+    const index = sortedEntries.findIndex((current) => current._id === entry._id);
+    const target = sortedEntries[index + direction];
+    if (index < 0 || !target) return;
+
+    const currentPriority = Number(entry.priority) || index + 1;
+    const targetPriority = Number(target.priority) || index + direction + 1;
+
+    setMutating(true);
+    try {
+      await Promise.all([
+        updateCanisWorldEntry(entry._id, {
+          ...stripEntryMeta(entry),
+          priority: targetPriority,
+        }),
+        updateCanisWorldEntry(target._id, {
+          ...stripEntryMeta(target),
+          priority: currentPriority,
+        }),
+      ]);
+      toast.success("日常紀錄排序已更新");
+      await refetch();
+    } catch (moveError) {
+      toast.error(getErrorMessage(moveError, "日常紀錄排序更新失敗"));
+    } finally {
+      setMutating(false);
+    }
+  }
 
   const columns = useMemo(
     () => [
@@ -457,6 +649,19 @@ export default function CanisWorldPage() {
         ),
       },
       {
+        accessorKey: "priority",
+        enableSorting: false,
+        header: () => <div className="whitespace-nowrap">排序</div>,
+        cell: ({ row }) => (
+          <EntryOrderButtons
+            entry={row.original}
+            entries={sortedEntries}
+            disabled={mutating}
+            onMove={moveEntry}
+          />
+        ),
+      },
+      {
         id: "actions",
         enableSorting: false,
         header: () => <div className="text-right">動作</div>,
@@ -496,12 +701,20 @@ export default function CanisWorldPage() {
         ),
       },
     ],
-    [],
+    [mutating, sortedEntries],
   );
 
   const traitsText =
     settings?.profile?.traitsText ??
     (settings?.profile?.traits || []).join(", ");
+  const categoryOptions = useMemo(
+    () => uniqueOptions(baseCategoryOptions, entries, "category"),
+    [entries]
+  );
+  const moodOptions = useMemo(
+    () => uniqueOptions(baseMoodOptions, entries, "mood"),
+    [entries]
+  );
 
   return (
     <DashboardShell
@@ -529,20 +742,22 @@ export default function CanisWorldPage() {
             onValueChange={setActiveSection}
             className="hidden min-w-0 md:block"
           >
-            <TabsList
-              variant="line"
-              className="w-full justify-start gap-6 overflow-x-auto"
-            >
-              {managementSections.map((section) => (
-                <TabsTrigger
-                  key={section.value}
-                  value={section.value}
-                  variant="line"
-                >
-                  {section.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="scrollbar-none overflow-x-auto overflow-y-hidden">
+              <TabsList
+                variant="line"
+                className="w-max min-w-full flex-nowrap justify-start gap-6"
+              >
+                {managementSections.map((section) => (
+                  <TabsTrigger
+                    key={section.value}
+                    value={section.value}
+                    variant="line"
+                  >
+                    {section.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
           </Tabs>
 
           <div className="grid gap-2 md:hidden">
@@ -727,6 +942,83 @@ export default function CanisWorldPage() {
                     value={settings.content?.headerLinkUrl}
                     onChange={(value) => updateContent("headerLinkUrl", value)}
                   />
+                  <div className="grid gap-3 md:col-span-2">
+                    <div className="grid max-w-2xl gap-2">
+                      <Label htmlFor="hero-entry">關聯日常紀錄</Label>
+                      <Select
+                        value={
+                          settings.content?.heroEntryId || "__featured__"
+                        }
+                        onValueChange={selectHeroEntry}
+                      >
+                        <SelectTrigger id="hero-entry" className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__featured__">
+                            自動使用第一筆精選日常
+                          </SelectItem>
+                          {publishedEntries.map((entry) => (
+                              <SelectItem key={entry._id} value={entry._id}>
+                                {entry.title}
+                                {entry.occurredAt
+                                  ? ` · ${String(entry.occurredAt).slice(0, 10)}`
+                                  : ""}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs leading-5 text-muted-foreground">
+                        主視覺卡片的分類、日期、標題與摘要會取自這筆公開日常紀錄。
+                      </p>
+                    </div>
+                    <div className="grid max-w-2xl gap-2">
+                      <Label>首頁主視覺圖片</Label>
+                      {heroImageOptions.length ? (
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {heroImageOptions.map((path, index) => {
+                            const selected = path === selectedHeroImage;
+                            return (
+                              <button
+                                key={`${path}-${index}`}
+                                type="button"
+                                aria-pressed={selected}
+                                aria-label={`選擇第 ${index + 1} 張照片作為首頁主視覺`}
+                                className={`relative aspect-video overflow-hidden rounded-lg border bg-muted outline-none transition-all focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                                  selected
+                                    ? "border-primary ring-2 ring-primary"
+                                    : "hover:border-foreground/40"
+                                }`}
+                                onClick={() => updateContent("heroImage", path)}
+                              >
+                                <img
+                                  src={resolveImagePreview(path)}
+                                  alt={`第 ${index + 1} 張照片`}
+                                  loading="lazy"
+                                  className="absolute inset-0 size-full object-cover"
+                                />
+                                {selected ? (
+                                  <span className="absolute right-2 top-2 z-10 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                                    <Check className="size-4" />
+                                  </span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="grid min-h-28 place-items-center gap-2 rounded-lg border border-dashed bg-muted/15 p-6 text-center">
+                          <ImageIcon className="size-5 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            這筆日常沒有照片，請先到日常紀錄加入照片。
+                          </p>
+                        </div>
+                      )}
+                      <p className="text-xs leading-5 text-muted-foreground">
+                        只能選擇關聯日常內的照片，確保主視覺與卡片內容一致。
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
@@ -867,30 +1159,27 @@ export default function CanisWorldPage() {
                     setDraft({ ...draft, occurredAt: value })
                   }
                 />
-                <Field
+                <SuggestionCombobox
                   id="entry-category"
                   label="分類"
                   value={draft.category}
                   onChange={(value) => setDraft({ ...draft, category: value })}
+                  options={categoryOptions}
+                  placeholder="選擇或輸入分類"
                 />
-                <Field
+                <SuggestionCombobox
                   id="entry-mood"
                   label="心情"
                   value={draft.mood}
                   onChange={(value) => setDraft({ ...draft, mood: value })}
+                  options={moodOptions}
+                  placeholder="選擇或輸入心情"
                 />
                 <Field
                   id="entry-tags"
                   label="標籤，逗號分隔"
                   value={draft.tagsText}
                   onChange={(value) => setDraft({ ...draft, tagsText: value })}
-                />
-                <Field
-                  id="entry-priority"
-                  label="排序"
-                  type="number"
-                  value={draft.priority}
-                  onChange={(value) => setDraft({ ...draft, priority: value })}
                 />
               </div>
               <div className="grid gap-2">
@@ -1050,25 +1339,39 @@ export default function CanisWorldPage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-wrap gap-4">
-                <Label className="flex items-center gap-2">
-                  <Checkbox
-                    checked={draft.featured}
-                    onCheckedChange={(checked) =>
-                      setDraft({ ...draft, featured: checked === true })
-                    }
-                  />
-                  精選
-                </Label>
-                <Label className="flex items-center gap-2">
+              <div className="grid gap-3">
+                <FieldLabel className="cursor-pointer rounded-lg border bg-muted/10 p-4 transition-colors hover:bg-muted/30">
+                  <CheckboxField className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                    <Checkbox
+                      checked={draft.featured}
+                      onCheckedChange={(checked) =>
+                        setDraft({ ...draft, featured: checked === true })
+                      }
+                    />
+                    <FieldContent>
+                      <span className="text-sm font-medium">設為精選</span>
+                      <FieldDescription>
+                        會出現在首頁的日常紀錄區塊；未勾選仍可保留在完整相簿與資料表。
+                      </FieldDescription>
+                    </FieldContent>
+                  </CheckboxField>
+                </FieldLabel>
+                <FieldLabel className="cursor-pointer rounded-lg border bg-muted/10 p-4 transition-colors hover:bg-muted/30">
+                  <CheckboxField className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                   <Checkbox
                     checked={draft.published}
                     onCheckedChange={(checked) =>
                       setDraft({ ...draft, published: checked === true })
                     }
                   />
-                  公開
-                </Label>
+                    <FieldContent>
+                      <span className="text-sm font-medium">公開顯示</span>
+                      <FieldDescription>
+                        勾選後會同步顯示在 canis.world；關閉時只保留在後台管理。
+                      </FieldDescription>
+                    </FieldContent>
+                  </CheckboxField>
+                </FieldLabel>
               </div>
             </div>
             <DialogFooter className="border-t px-4 py-4 sm:px-6">

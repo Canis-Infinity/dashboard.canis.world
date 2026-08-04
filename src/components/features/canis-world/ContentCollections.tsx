@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -115,6 +121,50 @@ function ActionButtons({ item, onEdit, onDelete, label }) {
   );
 }
 
+function OrderButtons({ item, items, onMove, disabled, label }) {
+  const index = items.findIndex((current) => current._id === item._id);
+
+  return (
+    <div className="flex gap-1">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`${label}往上移`}
+            disabled={disabled || index <= 0}
+            onClick={() => onMove(item, -1)}
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>往上移</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`${label}往下移`}
+            disabled={disabled || index < 0 || index >= items.length - 1}
+            onClick={() => onMove(item, 1)}
+          >
+            <ArrowDown className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>往下移</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+function stripMeta(item) {
+  const { _id, createdAt, updatedAt, ...payload } = item;
+  return payload;
+}
+
 export function ContentCollections({
   faqs,
   featureCards,
@@ -201,6 +251,44 @@ export function ContentCollections({
     }
   }
 
+  const sortedFaqs = [...faqs].sort(
+    (a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0),
+  );
+  const sortedFeatureCards = [...featureCards].sort(
+    (a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0),
+  );
+
+  async function moveCollectionItem(type, item, direction) {
+    const config = configs[type];
+    const items = type === "faq" ? sortedFaqs : sortedFeatureCards;
+    const index = items.findIndex((current) => current._id === item._id);
+    const target = items[index + direction];
+    if (index < 0 || !target) return;
+
+    const currentPriority = Number(item.priority) || index + 1;
+    const targetPriority = Number(target.priority) || index + direction + 1;
+
+    setSaving(true);
+    try {
+      await Promise.all([
+        updateCanisWorldCollectionItem(config.collection, item._id, {
+          ...stripMeta(item),
+          priority: targetPriority,
+        }),
+        updateCanisWorldCollectionItem(config.collection, target._id, {
+          ...stripMeta(target),
+          priority: currentPriority,
+        }),
+      ]);
+      toast.success(`${config.singular}排序已更新`);
+      await onChanged();
+    } catch (error) {
+      toast.error(getErrorMessage(error, `${config.singular}排序更新失敗`));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const faqColumns = useMemo(
     () => [
       {
@@ -219,8 +307,18 @@ export function ContentCollections({
       },
       {
         accessorKey: "priority",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="排序" />
+        enableSorting: false,
+        header: () => <div className="whitespace-nowrap">排序</div>,
+        cell: ({ row }) => (
+          <OrderButtons
+            item={row.original}
+            items={sortedFaqs}
+            label="常見問題"
+            disabled={saving}
+            onMove={(item, direction) =>
+              moveCollectionItem("faq", item, direction)
+            }
+          />
         ),
       },
       {
@@ -254,7 +352,7 @@ export function ContentCollections({
         ),
       },
     ],
-    [],
+    [saving, sortedFaqs],
   );
 
   const featureColumns = useMemo(
@@ -320,12 +418,6 @@ export function ContentCollections({
     [],
   );
 
-  const sortedFaqs = [...faqs].sort(
-    (a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0),
-  );
-  const sortedFeatureCards = [...featureCards].sort(
-    (a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0),
-  );
   const activeConfig = editor ? configs[editor.type] : null;
 
   return (
@@ -484,26 +576,35 @@ export function ContentCollections({
                 </>
               )}
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="collection-priority">排序</Label>
-                  <Input
-                    id="collection-priority"
-                    type="number"
-                    value={draft.priority ?? 100}
-                    onChange={(event) =>
-                      setDraft({ ...draft, priority: event.target.value })
-                    }
-                  />
-                </div>
-                <Label className="flex items-end gap-2 pb-2">
-                  <Checkbox
-                    checked={draft.published !== false}
-                    onCheckedChange={(checked) =>
-                      setDraft({ ...draft, published: checked === true })
-                    }
-                  />
-                  顯示於前台
-                </Label>
+                {editor?.type === "feature" ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="collection-priority">排序</Label>
+                    <Input
+                      id="collection-priority"
+                      type="number"
+                      value={draft.priority ?? 100}
+                      onChange={(event) =>
+                        setDraft({ ...draft, priority: event.target.value })
+                      }
+                    />
+                  </div>
+                ) : null}
+                <FieldLabel className="cursor-pointer rounded-lg border bg-muted/10 p-4 transition-colors hover:bg-muted/30 md:col-span-2">
+                  <Field className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                    <Checkbox
+                      checked={draft.published !== false}
+                      onCheckedChange={(checked) =>
+                        setDraft({ ...draft, published: checked === true })
+                      }
+                    />
+                    <FieldContent>
+                      <span className="text-sm font-medium">顯示於前台</span>
+                      <FieldDescription>
+                        勾選後會顯示在 canis.world；關閉時保留資料但不公開。
+                      </FieldDescription>
+                    </FieldContent>
+                  </Field>
+                </FieldLabel>
               </div>
             </div>
             <DialogFooter className="border-t px-6 py-4">

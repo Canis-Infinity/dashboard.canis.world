@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { FieldDescription, FieldLabel } from '@/components/ui/field';
+import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,9 +24,9 @@ import { createProfileLink, deleteProfileLink, getProfile, reorderProfileLinks, 
 import { getErrorMessage } from '@/utils/apiError';
 
 const domainOptions = [
-  { value: 'general', label: '一般領域' },
-  { value: 'afterDark', label: '深夜領域' },
-  { value: 'work', label: '工作領域' },
+  { value: 'general', label: '一般領域', description: '顯示在 Canis Den 的預設連結頁。' },
+  { value: 'afterDark', label: '深夜領域', description: '顯示在年齡確認後可進入的深夜分頁。' },
+  { value: 'work', label: '工作領域', description: '顯示在作品、委託或正式工作相關分頁。' },
 ];
 const domainLabels = Object.fromEntries(domainOptions.map((item) => [item.value, item.label]));
 
@@ -196,8 +196,8 @@ export default function LinksPage() {
               </section>
               <section className="grid gap-4 border-t px-6 py-5">
                 <div><h3 className="text-sm font-semibold">顯示設定</h3><p className="text-xs text-muted-foreground">選擇這筆連結會出現在哪些內容領域。</p></div>
-                <div className="grid gap-2 sm:grid-cols-3">{domainOptions.map((option) => { const checkboxId = `domain-${option.value}`; return <FieldLabel key={option.value} htmlFor={checkboxId} className="flex cursor-pointer items-center gap-3 rounded-md border p-3"><Checkbox id={checkboxId} checked={draft.domain?.includes(option.value)} onCheckedChange={(checked) => toggleDomain(option.value, checked === true)} />{option.label}</FieldLabel>; })}</div>
-                <div className="grid gap-1"><FieldLabel htmlFor="link-enabled" className="flex cursor-pointer items-center gap-2"><Checkbox id="link-enabled" checked={draft.enabled} onCheckedChange={(checked) => setDraft({ ...draft, enabled: checked === true })} />啟用此連結</FieldLabel><FieldDescription className="pl-6">關閉後會保留資料，但不會顯示在 Canis Den 網站。</FieldDescription></div>
+                <div className="grid gap-2 sm:grid-cols-3">{domainOptions.map((option) => { const checkboxId = `domain-${option.value}`; return <FieldLabel key={option.value} htmlFor={checkboxId} className="cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/30"><Field className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><Checkbox id={checkboxId} checked={draft.domain?.includes(option.value)} onCheckedChange={(checked) => toggleDomain(option.value, checked === true)} /><FieldContent><span className="text-sm font-medium">{option.label}</span><FieldDescription>{option.description}</FieldDescription></FieldContent></Field></FieldLabel>; })}</div>
+                <FieldLabel htmlFor="link-enabled" className="cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/30"><Field className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><Checkbox id="link-enabled" checked={draft.enabled} onCheckedChange={(checked) => setDraft({ ...draft, enabled: checked === true })} /><FieldContent><span className="text-sm font-medium">啟用此連結</span><FieldDescription>關閉後會保留資料，但不會顯示在 Canis Den 網站。</FieldDescription></FieldContent></Field></FieldLabel>
               </section>
             </div>
             <DialogFooter className="border-t px-6 py-4"><DialogClose asChild><Button type="button" variant="outline" disabled={mutating}>取消</Button></DialogClose><Button type="submit" disabled={mutating}>{mutating ? '儲存中...' : '儲存'}</Button></DialogFooter>
