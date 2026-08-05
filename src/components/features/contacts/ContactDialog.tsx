@@ -104,7 +104,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSaved }) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="comment">備註</Label>
-                <Textarea id="comment" name="comment" defaultValue={contact.comment || ''} rows={5} />
+                <Textarea id="comment" name="comment" defaultValue={contact.comment || ''} rows={5} placeholder="請輸入內部處理備註" />
               </div>
             </div>
           </div>

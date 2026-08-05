@@ -508,6 +508,7 @@ export function ContentCollections({
                     <Label htmlFor="faq-question">問題</Label>
                     <Input
                       id="faq-question"
+                      placeholder="例如：Canis World 會更新哪些內容？"
                       value={draft.question || ""}
                       onChange={(event) =>
                         setDraft({ ...draft, question: event.target.value })
@@ -519,6 +520,7 @@ export function ContentCollections({
                     <Label htmlFor="faq-answer">回答</Label>
                     <Textarea
                       id="faq-answer"
+                      placeholder="請輸入問題的回答"
                       value={draft.answer || ""}
                       onChange={(event) =>
                         setDraft({ ...draft, answer: event.target.value })
@@ -534,6 +536,7 @@ export function ContentCollections({
                     <Label htmlFor="feature-title">標題</Label>
                     <Input
                       id="feature-title"
+                      placeholder="例如：日常紀錄"
                       value={draft.title || ""}
                       onChange={(event) =>
                         setDraft({ ...draft, title: event.target.value })
@@ -545,6 +548,7 @@ export function ContentCollections({
                     <Label htmlFor="feature-description">說明</Label>
                     <Textarea
                       id="feature-description"
+                      placeholder="請輸入資訊卡片說明"
                       value={draft.description || ""}
                       onChange={(event) =>
                         setDraft({ ...draft, description: event.target.value })
@@ -562,7 +566,7 @@ export function ContentCollections({
                       }
                     >
                       <SelectTrigger id="feature-icon">
-                        <SelectValue />
+                        <SelectValue placeholder="請選擇圖示" />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(iconLabels).map(([value, label]) => (

@@ -65,7 +65,7 @@ export default function Login() {
                 <form className="grid gap-5" onSubmit={handleSubmit}>
                   <div className="grid gap-2">
                     <Label htmlFor="username">帳號</Label>
-                    <Input id="username" name="username" type="text" autoComplete="username" required />
+                    <Input id="username" name="username" type="text" autoComplete="username" placeholder="請輸入帳號" required />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="password">密碼</Label>
@@ -75,6 +75,7 @@ export default function Login() {
                         name="password"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
+                        placeholder="請輸入密碼"
                         className="pr-10"
                         required
                       />

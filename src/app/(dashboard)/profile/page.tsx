@@ -24,11 +24,11 @@ function cleanProfile(value) {
   return profile;
 }
 
-function Field({ id, label, value, onChange, type = 'text', required = false }) {
+function Field({ id, label, value, onChange, type = 'text', required = false, placeholder }) {
   return (
     <div className="grid gap-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} value={value || ''} onChange={(event) => onChange(event.target.value)} required={required} />
+      <Input id={id} type={type} value={value || ''} placeholder={placeholder || `請輸入${label}`} onChange={(event) => onChange(event.target.value)} required={required} />
     </div>
   );
 }
@@ -102,13 +102,13 @@ function LocaleFields({ locale, value, onChange }) {
   return (
     <div className="grid gap-5 pt-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field id={`${locale}-handle`} label="帳號標示" value={value?.handle} onChange={(next) => update('handle', next)} required />
-        <Field id={`${locale}-title`} label="頁面標題" value={value?.title} onChange={(next) => update('title', next)} required />
-        <Field id={`${locale}-badge`} label="品牌短標" value={value?.badge} onChange={(next) => update('badge', next)} required />
+        <Field id={`${locale}-handle`} label="帳號標示" value={value?.handle} placeholder="例如：@canis" onChange={(next) => update('handle', next)} required />
+        <Field id={`${locale}-title`} label="頁面標題" value={value?.title} placeholder="例如：Canis Den" onChange={(next) => update('title', next)} required />
+        <Field id={`${locale}-badge`} label="品牌短標" value={value?.badge} placeholder="例如：人型犬的日常基地" onChange={(next) => update('badge', next)} required />
       </div>
       <div className="grid gap-2">
         <Label htmlFor={`${locale}-description`}>個人介紹</Label>
-        <Textarea id={`${locale}-description`} value={value?.description || ''} onChange={(event) => update('description', event.target.value)} className="min-h-28" required />
+        <Textarea id={`${locale}-description`} value={value?.description || ''} placeholder={locale === 'en' ? '請輸入英文個人介紹' : '請輸入繁體中文個人介紹'} onChange={(event) => update('description', event.target.value)} className="min-h-28" required />
       </div>
     </div>
   );
@@ -118,10 +118,10 @@ function MetadataFields({ locale, value, onChange }) {
   const update = (key, nextValue) => onChange({ ...value, [key]: nextValue });
   return (
     <div className="grid gap-5 pt-4">
-      <Field id={`${locale}-metadata-title`} label="搜尋結果標題" value={value?.metadataTitle} onChange={(next) => update('metadataTitle', next)} required />
+      <Field id={`${locale}-metadata-title`} label="搜尋結果標題" value={value?.metadataTitle} placeholder="例如：Canis Den｜人型犬的日常基地" onChange={(next) => update('metadataTitle', next)} required />
       <div className="grid gap-2">
         <Label htmlFor={`${locale}-metadata-description`}>搜尋結果描述</Label>
-        <Textarea id={`${locale}-metadata-description`} value={value?.metadataDescription || ''} onChange={(event) => update('metadataDescription', event.target.value)} className="min-h-24" required />
+        <Textarea id={`${locale}-metadata-description`} value={value?.metadataDescription || ''} placeholder={locale === 'en' ? '請輸入英文搜尋結果描述' : '請輸入繁體中文搜尋結果描述'} onChange={(event) => update('metadataDescription', event.target.value)} className="min-h-24" required />
       </div>
     </div>
   );
@@ -191,8 +191,8 @@ export default function ProfilePage() {
             <CardContent className="grid items-start gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(20rem,0.8fr)_minmax(22rem,1.2fr)]">
               <FileUploadField compact id="avatar" name="avatar" title="頭像" description="點擊圖片即可預覽，選擇新圖片後於頁面底部儲存。" helperText="JPG、PNG、WEBP，最大 5MB" previewUrl={apiAssetUrl(form.avatar)} maxSize={5 * 1024 * 1024} accept={{ 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] }} />
               <div className="grid content-start gap-4">
-                <Field id="email" label="公開聯絡信箱" value={form.email} onChange={(value) => updateBasic('email', value)} type="email" required />
-                <Field id="site-url" label="正式網站網址" value={form.siteUrl} onChange={(value) => updateBasic('siteUrl', value)} type="url" required />
+                <Field id="email" label="公開聯絡信箱" value={form.email} placeholder="例如：example@gmail.com" onChange={(value) => updateBasic('email', value)} type="email" required />
+                <Field id="site-url" label="正式網站網址" value={form.siteUrl} placeholder="例如：http://example.com" onChange={(value) => updateBasic('siteUrl', value)} type="url" required />
               </div>
             </CardContent>
           </Card>

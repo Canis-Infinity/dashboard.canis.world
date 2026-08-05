@@ -89,8 +89,11 @@ export function AppSidebar(props) {
         <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="h-10 gap-3 px-2" asChild>
-              <Link href="/">
+            <SidebarMenuButton
+              size="lg"
+              className="h-10 gap-3 px-2"
+              render={<Link href="/" />}
+            >
                 <Image
                   src="/favicon.png"
                   alt="Canis Den"
@@ -106,7 +109,6 @@ export function AppSidebar(props) {
                     Dashboard
                   </span>
                 </div>
-              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -121,11 +123,14 @@ export function AppSidebar(props) {
                   const Icon = item.icon;
                   return (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton className="h-10 text-[15px] font-medium" asChild isActive={pathname === item.href} tooltip={item.title}>
-                        <Link href={item.href}>
+                      <SidebarMenuButton
+                        className="h-10 text-[15px] font-medium"
+                        render={<Link href={item.href} />}
+                        isActive={pathname === item.href}
+                        tooltip={item.title}
+                      >
                           <Icon className="size-4" />
                           <span>{item.title}</span>
-                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

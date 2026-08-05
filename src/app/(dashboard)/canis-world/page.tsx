@@ -233,7 +233,14 @@ function Field({
   onChange,
   type = "text",
   required = false,
+  placeholder,
 }) {
+  const resolvedPlaceholder =
+    placeholder ??
+    (type === "date"
+      ? undefined
+      : `請輸入${String(label).replace("，逗號分隔", "")}`);
+
   return (
     <div className="grid gap-2">
       <Label htmlFor={id}>{label}</Label>
@@ -241,6 +248,7 @@ function Field({
         id={id}
         type={type}
         value={value || ""}
+        placeholder={resolvedPlaceholder}
         onChange={(event) => onChange(event.target.value)}
         required={required}
       />
@@ -786,7 +794,7 @@ export default function CanisWorldPage() {
             <Label htmlFor="management-section">管理區塊</Label>
             <Select value={activeSection} onValueChange={setActiveSection}>
               <SelectTrigger id="management-section">
-                <SelectValue />
+                <SelectValue placeholder="請選擇管理區塊" />
               </SelectTrigger>
               <SelectContent>
                 {managementSections.map((section) => (
@@ -839,6 +847,7 @@ export default function CanisWorldPage() {
                   <Label htmlFor="status-note">一句話</Label>
                   <Textarea
                     id="status-note"
+                    placeholder="請輸入今日狀態補充"
                     value={settings.status?.note || ""}
                     onChange={(event) =>
                       updateStatus("note", event.target.value)
@@ -892,6 +901,7 @@ export default function CanisWorldPage() {
                   <Label htmlFor="intro">介紹</Label>
                   <Textarea
                     id="intro"
+                    placeholder="請輸入角色介紹"
                     value={settings.profile?.intro || ""}
                     onChange={(event) =>
                       updateProfile("intro", event.target.value)
@@ -902,6 +912,7 @@ export default function CanisWorldPage() {
                 <Field
                   id="traits"
                   label="特徵標籤，逗號分隔"
+                  placeholder="例如：人型犬, 日常紀錄, 基地生活"
                   value={traitsText}
                   onChange={(value) => updateProfile("traitsText", value)}
                 />
@@ -926,6 +937,7 @@ export default function CanisWorldPage() {
                   id="footer-owner-url"
                   label="擁有者連結"
                   type="url"
+                  placeholder="例如：http://example.com"
                   value={settings.footer?.ownerUrl}
                   onChange={(value) => updateFooter("ownerUrl", value)}
                 />
@@ -958,9 +970,10 @@ export default function CanisWorldPage() {
                     }
                   />
                   <Field
-                    id="header-link-url"
-                    label="右上按鈕連結"
-                    type="url"
+                  id="header-link-url"
+                  label="右上按鈕連結"
+                  type="url"
+                  placeholder="例如：http://example.com"
                     value={settings.content?.headerLinkUrl}
                     onChange={(value) => updateContent("headerLinkUrl", value)}
                   />
@@ -974,7 +987,7 @@ export default function CanisWorldPage() {
                         onValueChange={selectHeroEntry}
                       >
                         <SelectTrigger id="hero-entry" className="w-full">
-                          <SelectValue />
+                          <SelectValue placeholder="請選擇關聯日常紀錄" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__featured__">
@@ -1054,6 +1067,7 @@ export default function CanisWorldPage() {
                     <Label htmlFor="adult-description">成人提醒內容</Label>
                     <Textarea
                       id="adult-description"
+                      placeholder="請輸入成人提醒內容"
                       value={settings.content?.adultDescription || ""}
                       onChange={(event) =>
                         updateContent("adultDescription", event.target.value)
@@ -1092,6 +1106,7 @@ export default function CanisWorldPage() {
                     <Label htmlFor="about-description">關於區介紹</Label>
                     <Textarea
                       id="about-description"
+                      placeholder="請輸入關於區介紹"
                       value={settings.content?.aboutDescription || ""}
                       onChange={(event) =>
                         updateContent("aboutDescription", event.target.value)
@@ -1200,6 +1215,7 @@ export default function CanisWorldPage() {
                 <Field
                   id="entry-tags"
                   label="標籤，逗號分隔"
+                  placeholder="例如：出遊, 朋友, 基地生活"
                   value={draft.tagsText}
                   onChange={(value) => setDraft({ ...draft, tagsText: value })}
                 />
@@ -1208,6 +1224,7 @@ export default function CanisWorldPage() {
                 <Label htmlFor="entry-excerpt">摘要</Label>
                 <Textarea
                   id="entry-excerpt"
+                  placeholder="請輸入日常摘要"
                   value={draft.excerpt || ""}
                   onChange={(event) =>
                     setDraft({ ...draft, excerpt: event.target.value })
@@ -1219,6 +1236,7 @@ export default function CanisWorldPage() {
                 <Label htmlFor="entry-content">內容</Label>
                 <Textarea
                   id="entry-content"
+                  placeholder="請輸入完整日常內容"
                   value={draft.content || ""}
                   onChange={(event) =>
                     setDraft({ ...draft, content: event.target.value })
