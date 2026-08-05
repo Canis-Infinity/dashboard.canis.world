@@ -88,7 +88,7 @@ const emptyEntry = {
   title: "",
   excerpt: "",
   content: "",
-  category: "daily",
+  category: "出遊",
   mood: "",
   occurredAt: new Date().toISOString().slice(0, 10),
   tags: [],
@@ -116,7 +116,6 @@ const baseCategoryOptions = [
   "創作",
   "活動",
   "紀錄",
-  "daily",
 ];
 
 const baseMoodOptions = [
@@ -214,13 +213,17 @@ function splitList(value, separator = ",") {
     .filter(Boolean);
 }
 
-function uniqueOptions(baseOptions, entries, key) {
+function uniqueOptions(baseOptions, entries, key, excludedOptions = []) {
+  const excluded = new Set(
+    excludedOptions.map((option) => String(option).toLowerCase())
+  );
+
   return Array.from(
     new Set([
       ...baseOptions,
       ...entries.map((entry) => entry?.[key]).filter(Boolean),
     ])
-  );
+  ).filter((option) => !excluded.has(String(option).toLowerCase()));
 }
 
 function Field({
@@ -253,18 +256,37 @@ function SuggestionCombobox({
   options,
   placeholder,
 }) {
+  const [inputValue, setInputValue] = useState(value || "");
+
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  function commitCustomValue() {
+    const nextValue = inputValue.trim();
+    if (nextValue !== (value || "")) onChange(nextValue);
+  }
+
   return (
     <div className="grid gap-2">
       <Label htmlFor={id}>{label}</Label>
       <Combobox
         items={options}
         value={value || null}
-        inputValue={value || ""}
-        onValueChange={(nextValue) => onChange(nextValue || "")}
-        onInputValueChange={(nextValue) => onChange(nextValue)}
-        autoHighlight="always"
+        inputValue={inputValue}
+        onInputValueChange={setInputValue}
+        onValueChange={(nextValue) => {
+          if (!nextValue) return;
+          setInputValue(nextValue);
+          onChange(nextValue);
+        }}
+        autoHighlight
       >
-        <ComboboxInput id={id} placeholder={placeholder} />
+        <ComboboxInput
+          id={id}
+          placeholder={placeholder}
+          onBlur={commitCustomValue}
+        />
         <ComboboxContent>
           <ComboboxEmpty>沒有符合的選項，可直接輸入新值。</ComboboxEmpty>
           <ComboboxList>
@@ -708,7 +730,7 @@ export default function CanisWorldPage() {
     settings?.profile?.traitsText ??
     (settings?.profile?.traits || []).join(", ");
   const categoryOptions = useMemo(
-    () => uniqueOptions(baseCategoryOptions, entries, "category"),
+    () => uniqueOptions(baseCategoryOptions, entries, "category", ["daily"]),
     [entries]
   );
   const moodOptions = useMemo(
