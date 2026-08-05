@@ -118,15 +118,24 @@ const statusOptions = [
 
 const methodOptions = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
+const emptyFilters = {
+  type: 'all',
+  keyword: '',
+  module: 'all',
+  method: 'all',
+  dateRange: { from: undefined, to: undefined },
+};
+
 function EventLogsContent() {
   const [page, setPage] = useState(1);
-  const [type, setType] = useState('all');
-  const [keyword, setKeyword] = useState('');
-  const [moduleFilter, setModuleFilter] = useState('all');
-  const [methodFilter, setMethodFilter] = useState('all');
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+  const [draftFilters, setDraftFilters] = useState(emptyFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
   const [selectedLog, setSelectedLog] = useState(null);
-  const { data, total, amount, loading, error } = useEventLogs({ page, type, keyword });
+  const { data, total, amount, loading, error } = useEventLogs({
+    page,
+    type: appliedFilters.type,
+    keyword: appliedFilters.keyword,
+  });
   const totalPages = total || 1;
 
   const moduleOptions = useMemo(() => {
@@ -136,19 +145,19 @@ function EventLogsContent() {
 
   const filteredData = useMemo(() => {
     return data.filter((log) => {
-      if (moduleFilter !== 'all' && getModule(log) !== moduleFilter) return false;
-      if (methodFilter !== 'all' && getMethod(log) !== methodFilter) return false;
-      if (dateRange.from) {
+      if (appliedFilters.module !== 'all' && getModule(log) !== appliedFilters.module) return false;
+      if (appliedFilters.method !== 'all' && getMethod(log) !== appliedFilters.method) return false;
+      if (appliedFilters.dateRange.from) {
         const created = dayjs(log.createdAt);
-        const from = dayjs(dateRange.from).startOf('day');
-        const to = dayjs(dateRange.to || dateRange.from).endOf('day');
+        const from = dayjs(appliedFilters.dateRange.from).startOf('day');
+        const to = dayjs(appliedFilters.dateRange.to || appliedFilters.dateRange.from).endOf('day');
         if (!created.isValid() || created.isBefore(from) || created.isAfter(to)) return false;
       }
       return true;
     });
-  }, [data, dateRange, methodFilter, moduleFilter]);
+  }, [appliedFilters, data]);
 
-  const hasLocalFilter = moduleFilter !== 'all' || methodFilter !== 'all' || Boolean(dateRange.from);
+  const hasLocalFilter = appliedFilters.module !== 'all' || appliedFilters.method !== 'all' || Boolean(appliedFilters.dateRange.from);
   const columns = useMemo(() => [
     {
       accessorKey: 'createdAt',
@@ -212,13 +221,20 @@ function EventLogsContent() {
     },
   ], []);
 
+  function updateDraftFilter(key, value) {
+    setDraftFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function applyFilters(event) {
+    event?.preventDefault();
+    setPage(1);
+    setAppliedFilters(draftFilters);
+  }
+
   function resetFilters() {
     setPage(1);
-    setType('all');
-    setKeyword('');
-    setModuleFilter('all');
-    setMethodFilter('all');
-    setDateRange({ from: undefined, to: undefined });
+    setDraftFilters(emptyFilters);
+    setAppliedFilters(emptyFilters);
   }
 
   return (
@@ -232,28 +248,28 @@ function EventLogsContent() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-4 p-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(12rem,1.1fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_minmax(16rem,1.3fr)]">
+        <CardContent className="p-0">
+          <form className="grid gap-5 p-5" onSubmit={applyFilters}>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <DateRangePicker
               id="event-date-range-filter"
               label="日期區間"
-              value={dateRange}
-              onChange={setDateRange}
+              value={draftFilters.dateRange}
+              onChange={(value) => updateDraftFilter('dateRange', value)}
               includeHiddenInputs={false}
+              numberOfMonths={2}
+              className="md:col-span-2"
             />
 
             <Field>
               <Label htmlFor="event-status-filter">狀態</Label>
               <FieldContent>
                 <Select
-                  value={type}
-                  onValueChange={(value) => {
-                    setPage(1);
-                    setType(value);
-                  }}
+                  value={draftFilters.type}
+                  onValueChange={(value) => updateDraftFilter('type', value)}
                 >
-                  <SelectTrigger id="event-status-filter">
-                    <SelectValue placeholder="所有結果" />
+                  <SelectTrigger id="event-status-filter" className="w-full">
+                    <SelectValue>{statusOptions.find((item) => item.value === draftFilters.type)?.label}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {statusOptions.map((item) => (
@@ -267,9 +283,9 @@ function EventLogsContent() {
             <Field>
               <Label htmlFor="event-module-filter">模組</Label>
               <FieldContent>
-                <Select value={moduleFilter} onValueChange={setModuleFilter}>
-                  <SelectTrigger id="event-module-filter">
-                    <SelectValue placeholder="所有模組" />
+                <Select value={draftFilters.module} onValueChange={(value) => updateDraftFilter('module', value)}>
+                  <SelectTrigger id="event-module-filter" className="w-full">
+                    <SelectValue>{draftFilters.module === 'all' ? '所有模組' : draftFilters.module}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">所有模組</SelectItem>
@@ -284,9 +300,9 @@ function EventLogsContent() {
             <Field>
               <Label htmlFor="event-method-filter">HTTP 方法</Label>
               <FieldContent>
-                <Select value={methodFilter} onValueChange={setMethodFilter}>
-                  <SelectTrigger id="event-method-filter">
-                    <SelectValue placeholder="所有方法" />
+                <Select value={draftFilters.method} onValueChange={(value) => updateDraftFilter('method', value)}>
+                  <SelectTrigger id="event-method-filter" className="w-full">
+                    <SelectValue>{draftFilters.method === 'all' ? '所有方法' : draftFilters.method}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">所有方法</SelectItem>
@@ -298,7 +314,7 @@ function EventLogsContent() {
               </FieldContent>
             </Field>
 
-            <Field className="md:col-span-2 xl:col-span-1">
+            <Field className="md:col-span-2 xl:col-span-3">
               <Label htmlFor="event-log-search">搜尋</Label>
               <FieldContent>
                 <InputGroup>
@@ -307,11 +323,8 @@ function EventLogsContent() {
                   </InputGroupAddon>
                   <InputGroupInput
                     id="event-log-search"
-                    value={keyword}
-                    onChange={(event) => {
-                      setPage(1);
-                      setKeyword(event.target.value);
-                    }}
+                    value={draftFilters.keyword}
+                    onChange={(event) => updateDraftFilter('keyword', event.target.value)}
                     placeholder="搜尋操作者、路徑、動作、模組、目標"
                   />
                 </InputGroup>
@@ -319,16 +332,17 @@ function EventLogsContent() {
             </Field>
           </div>
 
-          <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-            <Button type="button" className="h-9 sm:min-w-24" onClick={() => setPage(1)}>
-              <Search className="size-4" />
-              搜尋
-            </Button>
+          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" className="h-9 sm:min-w-24" onClick={resetFilters}>
               <RotateCcw className="size-4" />
               重設
             </Button>
+            <Button type="submit" className="h-9 sm:min-w-28">
+              <Search className="size-4" />
+              套用篩選
+            </Button>
           </div>
+          </form>
         </CardContent>
       </Card>
 

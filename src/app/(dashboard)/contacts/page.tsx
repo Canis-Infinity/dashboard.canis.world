@@ -1,8 +1,8 @@
 // @ts-nocheck
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import { Info, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Info, Mail, MailOpen, Trash2, X } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
 import DashboardShell from '@/components/layout/DashboardShell';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -11,11 +11,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
+import { DataTable, DataTableColumnHeader, createDataTableSelectionColumn } from '@/components/ui/data-table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { deleteContact, getContact, getContacts } from '@/services/contactService';
+import { deleteContact, getContact, getContacts, updateContact } from '@/services/contactService';
 import { getErrorMessage } from '@/utils/apiError';
 
 const tabs = [
@@ -50,6 +50,22 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function createContactPayload(contact, status) {
+  return {
+    name: contact.name,
+    email: contact.email,
+    category: contact.category,
+    subject: contact.subject,
+    message: contact.message,
+    replyPreference: contact.replyPreference || 'email',
+    locale: contact.locale || 'zh-TW',
+    website: contact.website || '',
+    acknowledged: contact.acknowledged === true,
+    status,
+    comment: contact.comment || '',
+  };
+}
+
 export default function Contacts() {
   const [page, setPage] = useState(1);
   const [type, setType] = useState('all');
@@ -57,6 +73,9 @@ export default function Contacts() {
   const [removeModalShow, setRemoveModalShow] = useState(false);
   const [selectedContact, setSelectedContact] = useState({});
   const [removeDetail, setRemoveDetail] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkMutating, setBulkMutating] = useState(false);
 
   const params = useMemo(() => ({ page, ...(type !== 'all' ? { type } : {}) }), [page, type]);
   const fetchContacts = useCallback(() => getContacts(params), [params]);
@@ -68,7 +87,20 @@ export default function Contacts() {
   const contacts = data?.data || [];
   const total = data?.total || 1;
   const currentPage = data?.page || page;
+  const selectedContacts = useMemo(
+    () => contacts.filter((contact) => rowSelection[contact._id]),
+    [contacts, rowSelection]
+  );
+
+  useEffect(() => {
+    setRowSelection({});
+  }, [page, type]);
+
   const columns = useMemo(() => [
+    createDataTableSelectionColumn({
+      label: '聯絡表單',
+      getRowLabel: (contact) => contact.subject || contact.name,
+    }),
     {
       accessorKey: 'createdAt',
       header: ({ column }) => <DataTableColumnHeader column={column} title="時間" />,
@@ -148,11 +180,54 @@ export default function Contacts() {
     try {
       const result = await deleteContact(removeDetail.id);
       await refetch();
+      setRowSelection((current) => {
+        const next = { ...current };
+        delete next[removeDetail.id];
+        return next;
+      });
       setRemoveDetail({});
       setRemoveModalShow(false);
       toast.success(result.message || '刪除完成');
     } catch (error) {
       toast.error(getErrorMessage(error));
+    }
+  }
+
+  async function updateSelectedStatus(status, successMessage) {
+    if (!selectedContacts.length || bulkMutating) return;
+    setBulkMutating(true);
+    try {
+      await Promise.all(
+        selectedContacts.map((contact) =>
+          updateContact(contact._id, createContactPayload(contact, status))
+        )
+      );
+      setRowSelection({});
+      await refetch();
+      toast.success(`${selectedContacts.length} 筆聯絡表單${successMessage}`);
+    } catch (mutationError) {
+      await refetch();
+      toast.error(getErrorMessage(mutationError, '批次更新聯絡表單失敗'));
+    } finally {
+      setBulkMutating(false);
+    }
+  }
+
+  async function confirmBulkDelete() {
+    if (!selectedContacts.length || bulkMutating) return;
+    setBulkMutating(true);
+    try {
+      await Promise.all(selectedContacts.map((contact) => deleteContact(contact._id)));
+      const deletedCount = selectedContacts.length;
+      setRowSelection({});
+      setBulkDeleteOpen(false);
+      await refetch();
+      toast.success(`已刪除 ${deletedCount} 筆聯絡表單`);
+    } catch (mutationError) {
+      await refetch();
+      toast.error(getErrorMessage(mutationError, '批次刪除聯絡表單失敗'));
+    } finally {
+      setBulkMutating(false);
     }
   }
 
@@ -191,6 +266,38 @@ export default function Contacts() {
             columns={columns}
             data={contacts}
             loading={loading}
+            getRowId={(row) => row._id}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            selectionToolbar={(
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">已選取 {selectedContacts.length} 筆</Badge>
+                  <Button type="button" variant="ghost" size="sm" disabled={bulkMutating || !selectedContacts.length} onClick={() => setRowSelection({})}>
+                    <X className="size-4" />
+                    取消選取
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" disabled={bulkMutating || !selectedContacts.length} onClick={() => updateSelectedStatus('pending', '已標為已讀')}>
+                    <MailOpen className="size-4" />
+                    標為已讀
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" disabled={bulkMutating || !selectedContacts.length} onClick={() => updateSelectedStatus('unread', '已標為未讀')}>
+                    <Mail className="size-4" />
+                    標為未讀
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" disabled={bulkMutating || !selectedContacts.length} onClick={() => updateSelectedStatus('done', '已標為完成')}>
+                    <CheckCircle2 className="size-4" />
+                    標為完成
+                  </Button>
+                  <Button type="button" variant="destructive" size="sm" disabled={bulkMutating || !selectedContacts.length} onClick={() => setBulkDeleteOpen(true)}>
+                    <Trash2 className="size-4" />
+                    刪除
+                  </Button>
+                </div>
+              </div>
+            )}
             emptyText="尚無聯絡表單"
             emptyDescription={type === 'all' ? '訪客送出聯絡表單後會顯示在這裡。' : '目前沒有符合此處理狀態的聯絡表單。'}
             pageSize={10}
@@ -211,6 +318,14 @@ export default function Contacts() {
         description={`請問是否要刪除「${removeDetail.name || ''}」於 ${removeDetail.time || ''} 提交的表單？此動作無法復原。`}
         confirmText="刪除"
         onConfirm={confirmDelete}
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title="刪除選取的聯絡表單"
+        description={`確定要刪除選取的 ${selectedContacts.length} 筆聯絡表單嗎？此動作無法復原。`}
+        confirmText="全部刪除"
+        onConfirm={confirmBulkDelete}
       />
     </DashboardShell>
   );

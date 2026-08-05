@@ -19,6 +19,7 @@ import {
 import DashboardShell from "@/components/layout/DashboardShell";
 import { ContentCollections } from "@/components/features/canis-world/ContentCollections";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { DatePicker } from "@/components/shared/DatePicker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -679,25 +680,18 @@ export default function CanisWorldPage() {
         ),
       },
       {
-        accessorKey: "priority",
-        enableSorting: false,
-        header: () => <div className="whitespace-nowrap">排序</div>,
-        cell: ({ row }) => (
-          <EntryOrderButtons
-            entry={row.original}
-            entries={sortedEntries}
-            disabled={mutating}
-            onMove={moveEntry}
-          />
-        ),
-      },
-      {
         id: "actions",
         enableSorting: false,
         header: () => <div className="text-right">動作</div>,
         meta: { headerClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
+            <EntryOrderButtons
+              entry={row.original}
+              entries={sortedEntries}
+              disabled={mutating}
+              onMove={moveEntry}
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -1156,6 +1150,7 @@ export default function CanisWorldPage() {
               <DataTable
                 columns={columns}
                 data={sortedEntries}
+                enableSorting={false}
                 pageSize={10}
                 emptyText="尚未建立日常紀錄"
                 emptyDescription="新增第一筆日常後，Canis World 就會開始有生活感。"
@@ -1179,7 +1174,7 @@ export default function CanisWorldPage() {
             className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
           >
             <div className="grid min-h-0 min-w-0 gap-5 overflow-y-auto px-4 py-5 sm:px-6">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <Field
                   id="entry-title"
                   label="標題"
@@ -1187,14 +1182,14 @@ export default function CanisWorldPage() {
                   onChange={(value) => setDraft({ ...draft, title: value })}
                   required
                 />
-                <Field
+                <DatePicker
                   id="entry-date"
                   label="日期"
-                  type="date"
                   value={draft.occurredAt}
                   onChange={(value) =>
                     setDraft({ ...draft, occurredAt: value })
                   }
+                  required
                 />
                 <SuggestionCombobox
                   id="entry-category"
@@ -1212,13 +1207,15 @@ export default function CanisWorldPage() {
                   options={moodOptions}
                   placeholder="選擇或輸入心情"
                 />
-                <Field
-                  id="entry-tags"
-                  label="標籤，逗號分隔"
-                  placeholder="例如：出遊, 朋友, 基地生活"
-                  value={draft.tagsText}
-                  onChange={(value) => setDraft({ ...draft, tagsText: value })}
-                />
+                <div className="lg:col-span-2">
+                  <Field
+                    id="entry-tags"
+                    label="標籤，逗號分隔"
+                    placeholder="例如：出遊, 朋友, 基地生活"
+                    value={draft.tagsText}
+                    onChange={(value) => setDraft({ ...draft, tagsText: value })}
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="entry-excerpt">摘要</Label>

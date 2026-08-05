@@ -8,6 +8,7 @@ import {
   ChevronRightIcon,
 } from "lucide-react"
 import { DayPicker, getDefaultClassNames } from "react-day-picker";
+import { zhTW } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -20,6 +21,7 @@ function Calendar({
   buttonVariant = "ghost",
   formatters,
   components,
+  locale = zhTW,
   ...props
 }) {
   const defaultClassNames = getDefaultClassNames()
@@ -34,9 +36,10 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
+      locale={locale}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString(locale?.code || "zh-TW", { month: "short" }),
         ...formatters,
       }}
       classNames={{

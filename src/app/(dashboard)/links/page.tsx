@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ExternalLink, Pencil, Plus, Trash2 } from 'lucide-react';
 import DashboardShell from '@/components/layout/DashboardShell';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { IconCombobox, normalizeLucideIconName } from '@/components/shared/IconCombobox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -33,7 +35,7 @@ const domainLabels = Object.fromEntries(domainOptions.map((item) => [item.value,
 const emptyLink = {
   title: { 'zh-TW': '', en: '' },
   description: { 'zh-TW': '', en: '' },
-  href: '', icon: 'Globe', domain: ['general'], category: 'social',
+  href: '', icon: 'globe', domain: ['general'], category: 'social',
   enabled: true, priority: 100,
 };
 
@@ -59,7 +61,7 @@ export default function LinksPage() {
 
   function openEdit(link) {
     setEditingIndex(links.findIndex((item) => item === link));
-    setDraft({ ...link, title: { ...link.title }, description: { ...link.description }, domain: [...(link.domain || [])] });
+    setDraft({ ...link, icon: normalizeLucideIconName(link.icon), title: { ...link.title }, description: { ...link.description }, domain: [...(link.domain || [])] });
     setEditorOpen(true);
   }
 
@@ -142,12 +144,6 @@ export default function LinksPage() {
   }
 
   const columns = useMemo(() => [
-    {
-      accessorKey: 'priority',
-      enableSorting: false,
-      header: '排序',
-      cell: ({ row }) => <span className="tabular-nums">{sortedLinks.findIndex((item) => item._id === row.original._id) + 1}</span>,
-    },
     { accessorKey: 'title', header: ({ column }) => <DataTableColumnHeader column={column} title="標題" />, cell: ({ row }) => <div><div className="font-medium">{row.original.title?.['zh-TW']}</div><div className="text-xs text-muted-foreground">{row.original.title?.en}</div></div> },
     { accessorKey: 'domain', header: ({ column }) => <DataTableColumnHeader column={column} title="顯示區域" />, cell: ({ row }) => <div className="flex flex-wrap gap-1">{(row.original.domain || []).map((item) => <Badge key={item} variant="secondary">{domainLabels[item] || item}</Badge>)}</div> },
     { accessorKey: 'enabled', header: ({ column }) => <DataTableColumnHeader column={column} title="狀態" />, cell: ({ row }) => <Badge variant={row.original.enabled ? 'default' : 'secondary'}>{row.original.enabled ? '顯示' : '隱藏'}</Badge> },
@@ -168,6 +164,7 @@ export default function LinksPage() {
           <DataTable
             columns={columns}
             data={loading ? [] : sortedLinks}
+            enableSorting={false}
             loading={loading}
             pageSize={10}
             emptyText="尚未建立連結"
@@ -184,7 +181,7 @@ export default function LinksPage() {
               <section className="grid gap-4 px-6 py-5">
                 <div><h3 className="text-sm font-semibold">基本資料</h3><p className="text-xs text-muted-foreground">設定目標網址與圖示；排序請直接在外部表格調整。</p></div>
                 <div className="grid gap-2"><Label htmlFor="href">目標網址</Label><Input id="href" type="url" value={draft.href || ''} placeholder="例如：http://example.com" onChange={(event) => setDraft({ ...draft, href: event.target.value })} required /></div>
-                <div className="grid gap-4 md:grid-cols-2"><div className="grid gap-2"><Label htmlFor="icon">圖示名稱</Label><Input id="icon" value={draft.icon || ''} placeholder="例如：instagram" onChange={(event) => setDraft({ ...draft, icon: event.target.value })} required /></div><div className="grid gap-2"><Label htmlFor="priority">排序</Label><Input id="priority" type="number" value={draft.priority} readOnly aria-readonly="true" className="bg-muted/40" /></div></div>
+                <div className="grid gap-4 md:grid-cols-2"><div className="grid gap-2"><Label htmlFor="icon">圖示</Label><IconCombobox id="icon" value={draft.icon || ''} placeholder="搜尋 Lucide 圖示" onValueChange={(icon) => setDraft({ ...draft, icon })} required /></div><div className="grid gap-2"><Label htmlFor="priority">排序</Label><Input id="priority" type="number" value={draft.priority} readOnly aria-readonly="true" className="bg-muted/40" /></div></div>
               </section>
               <section className="grid gap-4 border-t px-6 py-5">
                 <div><h3 className="text-sm font-semibold">前台文案</h3><p className="text-xs text-muted-foreground">分別維護繁體中文與英文版本。</p></div>
@@ -195,9 +192,12 @@ export default function LinksPage() {
                 </Tabs>
               </section>
               <section className="grid gap-4 border-t px-6 py-5">
-                <div><h3 className="text-sm font-semibold">顯示設定</h3><p className="text-xs text-muted-foreground">選擇這筆連結會出現在哪些內容領域。</p></div>
+                <div><h3 className="text-sm font-semibold">顯示區域</h3><p className="text-xs text-muted-foreground">可複選這筆連結會出現的內容領域。</p></div>
                 <div className="grid gap-2 sm:grid-cols-3">{domainOptions.map((option) => { const checkboxId = `domain-${option.value}`; return <FieldLabel key={option.value} htmlFor={checkboxId} className="cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/30"><Field className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><Checkbox id={checkboxId} checked={draft.domain?.includes(option.value)} onCheckedChange={(checked) => toggleDomain(option.value, checked === true)} /><FieldContent><span className="text-sm font-medium">{option.label}</span><FieldDescription>{option.description}</FieldDescription></FieldContent></Field></FieldLabel>; })}</div>
-                <FieldLabel htmlFor="link-enabled" className="cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/30"><Field className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><Checkbox id="link-enabled" checked={draft.enabled} onCheckedChange={(checked) => setDraft({ ...draft, enabled: checked === true })} /><FieldContent><span className="text-sm font-medium">啟用此連結</span><FieldDescription>關閉後會保留資料，但不會顯示在 Canis Den 網站。</FieldDescription></FieldContent></Field></FieldLabel>
+              </section>
+              <section className="grid gap-4 border-t px-6 py-5">
+                <div><h3 className="text-sm font-semibold">連結狀態</h3><p className="text-xs text-muted-foreground">控制這筆連結是否同步顯示在前台。</p></div>
+                <FieldLabel htmlFor="link-enabled" className="cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/30"><Field className="grid-cols-[minmax(0,1fr)_auto] items-center gap-4"><FieldContent><span className="text-sm font-medium">啟用此連結</span><FieldDescription>關閉後仍會保留資料，但不會顯示在 Canis Den 網站。</FieldDescription></FieldContent><Switch id="link-enabled" checked={draft.enabled} onCheckedChange={(checked) => setDraft({ ...draft, enabled: checked })} /></Field></FieldLabel>
               </section>
             </div>
             <DialogFooter className="border-t px-6 py-4"><DialogClose asChild><Button type="button" variant="outline" disabled={mutating}>取消</Button></DialogClose><Button type="submit" disabled={mutating}>{mutating ? '儲存中...' : '儲存'}</Button></DialogFooter>

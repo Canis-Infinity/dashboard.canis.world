@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { format } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -22,7 +23,7 @@ function formatDate(value) {
 }
 
 function formatDisplayDate(value) {
-  return format(value, 'MMM dd, yyyy');
+  return format(value, 'PPP', { locale: zhTW });
 }
 
 export function DateRangePicker({
@@ -36,6 +37,7 @@ export function DateRangePicker({
   onChange,
   includeHiddenInputs = true,
   required,
+  numberOfMonths = 2,
   className,
 }) {
   const [innerRange, setInnerRange] = useState({
@@ -66,16 +68,18 @@ export function DateRangePicker({
         </>
       ) : null}
       <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            type="button"
-            variant="outline"
-            className={cn('h-9 w-full justify-start px-2.5 text-left font-normal', !range.from && 'text-muted-foreground')}
-          >
-            <CalendarIcon data-icon="inline-start" />
-            {displayValue}
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button
+              id={id}
+              type="button"
+              variant="outline"
+              className={cn('h-9 w-full justify-start px-2.5 text-left font-normal', !range.from && 'text-muted-foreground')}
+            />
+          }
+        >
+          <CalendarIcon data-icon="inline-start" />
+          {displayValue}
         </PopoverTrigger>
         <PopoverContent className="w-auto max-w-[calc(100vw-2rem)] overflow-x-auto p-0" align="start">
           <Calendar
@@ -83,7 +87,9 @@ export function DateRangePicker({
             defaultMonth={range.from}
             selected={range}
             onSelect={handleSelect}
-            numberOfMonths={2}
+            locale={zhTW}
+            numberOfMonths={numberOfMonths}
+            className="max-sm:[&_.rdp-month:nth-child(2)]:hidden"
           />
         </PopoverContent>
       </Popover>

@@ -13,6 +13,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, Inbox } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Pagination,
   PaginationContent,
@@ -56,6 +57,43 @@ function DataTableColumnHeader({ column, title, className }) {
   )
 }
 
+function createDataTableSelectionColumn({ label = "資料列", getRowLabel } = {}) {
+  return {
+    id: "select",
+    enableSorting: false,
+    enableHiding: false,
+    header: ({ table }) => {
+      const allSelected = table.getIsAllPageRowsSelected()
+      const someSelected = table.getIsSomePageRowsSelected()
+
+      return (
+        <Checkbox
+          aria-label={`選取目前頁面的所有${label}`}
+          checked={allSelected}
+          indeterminate={!allSelected && someSelected}
+          onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+        />
+      )
+    },
+    cell: ({ row }) => {
+      const rowLabel = getRowLabel?.(row.original) || row.id
+      return (
+        <Checkbox
+          aria-label={`選取${label}：${rowLabel}`}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onCheckedChange={(checked) => row.toggleSelected(checked)}
+          onClick={(event) => event.stopPropagation()}
+        />
+      )
+    },
+    meta: {
+      headerClassName: "w-10",
+      cellClassName: "w-10",
+    },
+  }
+}
+
 function DataTable({
   columns,
   data,
@@ -70,6 +108,11 @@ function DataTable({
   paginationSummary,
   onPageChange,
   initialSorting = [],
+  enableSorting = true,
+  rowSelection,
+  onRowSelectionChange,
+  getRowId,
+  selectionToolbar,
   className,
 }) {
   const [sorting, setSorting] = React.useState(initialSorting)
@@ -95,10 +138,15 @@ function DataTable({
         pageIndex: currentPageIndex,
         pageSize: currentPageSize,
       },
+      rowSelection: rowSelection || {},
     },
+    enableSorting,
+    enableRowSelection: Boolean(onRowSelectionChange),
+    getRowId,
     manualPagination: isControlledPagination,
     pageCount: isControlledPagination ? pageCount : undefined,
     onSortingChange: setSorting,
+    onRowSelectionChange,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -146,6 +194,9 @@ function DataTable({
 
   return (
     <div className={cn("w-full", className)}>
+      {selectionToolbar ? (
+        <div className="border-b bg-muted/20 px-4 py-3">{selectionToolbar}</div>
+      ) : null}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -172,7 +223,7 @@ function DataTable({
               ))
             ) : rows.length ? (
               rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className={cn("whitespace-nowrap", cell.column.columnDef.meta?.cellClassName)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -282,4 +333,4 @@ function DataTable({
   )
 }
 
-export { DataTable, DataTableColumnHeader }
+export { DataTable, DataTableColumnHeader, createDataTableSelectionColumn }

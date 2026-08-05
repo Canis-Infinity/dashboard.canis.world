@@ -306,22 +306,6 @@ export function ContentCollections({
         ),
       },
       {
-        accessorKey: "priority",
-        enableSorting: false,
-        header: () => <div className="whitespace-nowrap">排序</div>,
-        cell: ({ row }) => (
-          <OrderButtons
-            item={row.original}
-            items={sortedFaqs}
-            label="常見問題"
-            disabled={saving}
-            onMove={(item, direction) =>
-              moveCollectionItem("faq", item, direction)
-            }
-          />
-        ),
-      },
-      {
         accessorKey: "published",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="狀態" />
@@ -336,19 +320,31 @@ export function ContentCollections({
         id: "actions",
         enableSorting: false,
         header: () => <div className="text-right">動作</div>,
+        meta: { headerClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
-          <ActionButtons
-            item={row.original}
-            label="常見問題"
-            onEdit={(item) => openEdit("faq", item)}
-            onDelete={(item) =>
-              setRemoveTarget({
-                type: "faq",
-                id: item._id,
-                name: item.question,
-              })
-            }
-          />
+          <div className="flex justify-end gap-1">
+            <OrderButtons
+              item={row.original}
+              items={sortedFaqs}
+              label="常見問題"
+              disabled={saving}
+              onMove={(item, direction) =>
+                moveCollectionItem("faq", item, direction)
+              }
+            />
+            <ActionButtons
+              item={row.original}
+              label="常見問題"
+              onEdit={(item) => openEdit("faq", item)}
+              onDelete={(item) =>
+                setRemoveTarget({
+                  type: "faq",
+                  id: item._id,
+                  name: item.question,
+                })
+              }
+            />
+          </div>
         ),
       },
     ],
@@ -379,12 +375,6 @@ export function ContentCollections({
         cell: ({ row }) => iconLabels[row.original.icon] || "基地",
       },
       {
-        accessorKey: "priority",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="排序" />
-        ),
-      },
-      {
         accessorKey: "published",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="狀態" />
@@ -399,23 +389,35 @@ export function ContentCollections({
         id: "actions",
         enableSorting: false,
         header: () => <div className="text-right">動作</div>,
+        meta: { headerClassName: "text-right", cellClassName: "text-right" },
         cell: ({ row }) => (
-          <ActionButtons
-            item={row.original}
-            label="資訊卡片"
-            onEdit={(item) => openEdit("feature", item)}
-            onDelete={(item) =>
-              setRemoveTarget({
-                type: "feature",
-                id: item._id,
-                name: item.title,
-              })
-            }
-          />
+          <div className="flex justify-end gap-1">
+            <OrderButtons
+              item={row.original}
+              items={sortedFeatureCards}
+              label="資訊卡片"
+              disabled={saving}
+              onMove={(item, direction) =>
+                moveCollectionItem("feature", item, direction)
+              }
+            />
+            <ActionButtons
+              item={row.original}
+              label="資訊卡片"
+              onEdit={(item) => openEdit("feature", item)}
+              onDelete={(item) =>
+                setRemoveTarget({
+                  type: "feature",
+                  id: item._id,
+                  name: item.title,
+                })
+              }
+            />
+          </div>
         ),
       },
     ],
-    [],
+    [saving, sortedFeatureCards],
   );
 
   const activeConfig = editor ? configs[editor.type] : null;
@@ -445,6 +447,7 @@ export function ContentCollections({
           <DataTable
             columns={faqColumns}
             data={sortedFaqs}
+            enableSorting={false}
             pageSize={10}
             emptyText="尚未建立常見問題"
             emptyDescription="新增問題後會出現在首頁的關於區塊。"
@@ -475,6 +478,7 @@ export function ContentCollections({
           <DataTable
             columns={featureColumns}
             data={sortedFeatureCards}
+            enableSorting={false}
             pageSize={10}
             emptyText="尚未建立資訊卡片"
             emptyDescription="新增後會顯示在首頁底部。"
