@@ -7,6 +7,14 @@ export function buildDashboardCards(data = {}) {
     lastVist = 0,
     thisWeekVisit = 0,
     lastWeekVisit = 0,
+    todayCanisDenVisit = todayVisit,
+    lastCanisDenVisit = lastVist,
+    thisWeekCanisDenVisit = thisWeekVisit,
+    lastWeekCanisDenVisit = lastWeekVisit,
+    todayFrontendVisit = 0,
+    lastFrontendVisit = 0,
+    thisWeekFrontendVisit = 0,
+    lastWeekFrontendVisit = 0,
     todayContact = 0,
     lastContact = 0,
     thisWeekContact = 0,
@@ -15,16 +23,28 @@ export function buildDashboardCards(data = {}) {
 
   return [
     {
-      id: 'todayVisitors',
-      title: '本日造訪人數',
-      value: todayVisit,
-      change: todayVisit - lastVist,
+      id: 'todayCanisDenVisitors',
+      title: '本日 Canis Den 造訪',
+      value: todayCanisDenVisit,
+      change: todayCanisDenVisit - lastCanisDenVisit,
     },
     {
-      id: 'weekVisitors',
-      title: '本週造訪人數',
-      value: thisWeekVisit,
-      change: thisWeekVisit - lastWeekVisit,
+      id: 'weekCanisDenVisitors',
+      title: '本週 Canis Den 造訪',
+      value: thisWeekCanisDenVisit,
+      change: thisWeekCanisDenVisit - lastWeekCanisDenVisit,
+    },
+    {
+      id: 'todayFrontendVisitors',
+      title: '本日 Canis World 造訪',
+      value: todayFrontendVisit,
+      change: todayFrontendVisit - lastFrontendVisit,
+    },
+    {
+      id: 'weekFrontendVisitors',
+      title: '本週 Canis World 造訪',
+      value: thisWeekFrontendVisit,
+      change: thisWeekFrontendVisit - lastWeekFrontendVisit,
     },
     {
       id: 'todayContact',
@@ -42,7 +62,10 @@ export function buildDashboardCards(data = {}) {
 }
 
 export function buildWeeklyChartData(data = {}, now = new Date()) {
-  const visitByDate = new Map((data.thisWeekVisitByDay || []).map((item) => [item.date, item.amount]));
+  const canisDenVisitByDate = new Map(
+    (data.thisWeekCanisDenVisitByDay || data.thisWeekVisitByDay || []).map((item) => [item.date, item.amount])
+  );
+  const frontendVisitByDate = new Map((data.thisWeekFrontendVisitByDay || []).map((item) => [item.date, item.amount]));
   const contactByDate = new Map((data.thisWeekContactByDay || []).map((item) => [item.date, item.amount]));
 
   return Array.from({ length: 7 }).map((_, index) => {
@@ -56,7 +79,8 @@ export function buildWeeklyChartData(data = {}, now = new Date()) {
 
     return {
       name,
-      visitors: visitByDate.get(name) || 0,
+      canisDenVisitors: canisDenVisitByDate.get(name) || 0,
+      frontendVisitors: frontendVisitByDate.get(name) || 0,
       contact: contactByDate.get(name) || 0,
     };
   });

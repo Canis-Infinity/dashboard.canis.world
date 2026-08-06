@@ -739,6 +739,9 @@ export default function CanisWorldPage() {
     () => uniqueOptions(baseMoodOptions, entries, "mood"),
     [entries]
   );
+  const activeSectionLabel =
+    managementSections.find((section) => section.value === activeSection)
+      ?.label || "請選擇管理區塊";
 
   return (
     <DashboardShell
@@ -766,16 +769,12 @@ export default function CanisWorldPage() {
             onValueChange={setActiveSection}
             className="hidden min-w-0 md:block"
           >
-            <div className="scrollbar-none overflow-x-auto overflow-y-hidden">
-              <TabsList
-                variant="line"
-                className="w-max min-w-full flex-nowrap justify-start gap-6"
-              >
+            <div className="flex flex-col gap-4 border-b border-border md:flex-row md:items-end md:justify-between">
+              <TabsList variant="line">
                 {managementSections.map((section) => (
                   <TabsTrigger
                     key={section.value}
                     value={section.value}
-                    variant="line"
                   >
                     {section.label}
                   </TabsTrigger>
@@ -788,7 +787,7 @@ export default function CanisWorldPage() {
             <Label htmlFor="management-section">管理區塊</Label>
             <Select value={activeSection} onValueChange={setActiveSection}>
               <SelectTrigger id="management-section">
-                <SelectValue placeholder="請選擇管理區塊" />
+                <SelectValue>{activeSectionLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {managementSections.map((section) => (

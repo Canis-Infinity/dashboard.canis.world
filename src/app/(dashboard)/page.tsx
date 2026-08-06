@@ -9,15 +9,20 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartLegend, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDashboardCards, getDashboardChart } from '@/services/dashboardService';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { buildDashboardCards, buildWeeklyChartData } from '@/utils/dashboard';
 import { cn } from '@/lib/utils';
 
 const chartConfig = {
-  visitors: {
-    label: '造訪人數',
+  canisDenVisitors: {
+    label: 'Canis Den 造訪',
     color: 'var(--primary)',
+  },
+  frontendVisitors: {
+    label: 'Canis World 造訪',
+    color: 'var(--chart-3)',
   },
   contact: {
     label: '聯絡人數',
@@ -25,14 +30,35 @@ const chartConfig = {
   },
 };
 
+const siteSections = [
+  {
+    id: 'canis-den',
+    title: 'Canis Den',
+    domain: 'link.canis.world',
+    description: '連結入口、個人資料、外部連結與聯絡表單。',
+    cardIds: ['todayCanisDenVisitors', 'weekCanisDenVisitors', 'todayContact', 'weekContact'],
+    chartKeys: ['canisDenVisitors', 'contact'],
+  },
+  {
+    id: 'canis-world',
+    title: 'Canis World',
+    domain: 'canis.world',
+    description: '主站的人型犬日常、照片與基地紀錄。',
+    cardIds: ['todayFrontendVisitors', 'weekFrontendVisitors'],
+    chartKeys: ['frontendVisitors'],
+  },
+];
+
 const iconMap = {
-  todayVisitors: Users,
-  weekVisitors: Users,
+  todayCanisDenVisitors: Users,
+  weekCanisDenVisitors: Users,
+  todayFrontendVisitors: Users,
+  weekFrontendVisitors: Users,
   todayContact: Mail,
   weekContact: Mail,
 };
 
-function InteractiveChartLegend({ payload, hiddenSeries, onToggle }) {
+function InteractiveChartLegend({ payload, hiddenSeries, onToggle, config }) {
   if (!payload?.length) {
     return null;
   }
@@ -42,7 +68,7 @@ function InteractiveChartLegend({ payload, hiddenSeries, onToggle }) {
       {payload.map((item) => {
         const key = `${item.dataKey || item.value}`;
         const hidden = hiddenSeries.includes(key);
-        const config = chartConfig[key];
+        const itemConfig = config[key];
 
         return (
           <button
@@ -60,7 +86,7 @@ function InteractiveChartLegend({ payload, hiddenSeries, onToggle }) {
               style={{ backgroundColor: item.color }}
               aria-hidden="true"
             />
-            {config?.label || item.value}
+            {itemConfig?.label || item.value}
           </button>
         );
       })}
@@ -125,8 +151,89 @@ function DashboardChartSkeleton() {
       <div className="flex justify-center gap-5">
         <div className="flex items-center gap-2"><Skeleton className="size-2.5" /><Skeleton className="h-3 w-14" /></div>
         <div className="flex items-center gap-2"><Skeleton className="size-2.5" /><Skeleton className="h-3 w-14" /></div>
+        <div className="flex items-center gap-2"><Skeleton className="size-2.5" /><Skeleton className="h-3 w-14" /></div>
       </div>
     </div>
+  );
+}
+
+function TrendChart({ config, data, hiddenSeries, onToggle, series }) {
+  return (
+    <ChartContainer config={config} className="h-[280px] w-full overflow-hidden">
+      <AreaChart accessibilityLayer data={data} margin={{ left: 8, right: 24, top: 18, bottom: 4 }}>
+        <defs>
+          {series.map((key) => (
+            <linearGradient key={key} id={`fill-${key}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={`var(--color-${key})`} stopOpacity={key === 'contact' ? 0.45 : 0.68} />
+              <stop offset="95%" stopColor={`var(--color-${key})`} stopOpacity={0.03} />
+            </linearGradient>
+          ))}
+        </defs>
+        <CartesianGrid vertical={false} />
+        <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
+        <YAxis hide domain={[0, (dataMax) => Math.max(4, Math.ceil(dataMax + 1))]} />
+        <ChartTooltip content={<ChartTooltipContent />} />
+        <ChartLegend
+          content={<InteractiveChartLegend hiddenSeries={hiddenSeries} onToggle={onToggle} config={config} />}
+        />
+        {series.map((key) => (
+          <Area
+            key={key}
+            dataKey={key}
+            type="monotone"
+            fill={`url(#fill-${key})`}
+            hide={hiddenSeries.includes(key)}
+            stroke={`var(--color-${key})`}
+            strokeWidth={2}
+            stackId={key}
+          />
+        ))}
+      </AreaChart>
+    </ChartContainer>
+  );
+}
+
+function SiteSection({ section, cards, chartData, loading, hiddenSeries, onToggle }) {
+  const sectionCards = cards.filter((item) => section.cardIds.includes(item.id));
+  const sectionChartConfig = Object.fromEntries(section.chartKeys.map((key) => [key, chartConfig[key]]));
+
+  return (
+    <section className="grid w-full gap-4">
+      <div className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {sectionCards.map((item) => (
+          <StatCard key={item.id} item={item} loading={loading.cards} />
+        ))}
+      </div>
+
+      <Card className="overflow-hidden">
+        <CardHeader>
+          {loading.chart ? (
+            <>
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+            </>
+            ) : (
+              <>
+                <CardTitle>{section.title} 近七日趨勢</CardTitle>
+                <CardDescription>{section.domain} · {section.description}</CardDescription>
+              </>
+            )}
+        </CardHeader>
+        <CardContent className="px-2 sm:px-6">
+          {loading.chart ? (
+            <DashboardChartSkeleton />
+          ) : (
+            <TrendChart
+              config={sectionChartConfig}
+              data={chartData}
+              hiddenSeries={hiddenSeries}
+              onToggle={onToggle}
+              series={section.chartKeys}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
@@ -146,7 +253,7 @@ export default function Home() {
   }, []);
 
   return (
-    <DashboardShell title="儀表板">
+    <DashboardShell title="儀表板" description="依站台分開查看造訪與互動狀況。">
       {cards.error || chart.error ? (
         <Alert variant="destructive">
           <AlertTitle>資料讀取失敗</AlertTitle>
@@ -154,74 +261,30 @@ export default function Home() {
         </Alert>
       ) : null}
 
-      <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cardItems.map((item) => (
-          <StatCard key={item.id} item={item} loading={cards.loading} />
-        ))}
-      </section>
+      <Tabs defaultValue="canis-den" className="w-full">
+        <div className="flex flex-col gap-4 border-b border-border md:flex-row md:items-end md:justify-between">
+          <TabsList variant="line">
+            {siteSections.map((section) => (
+              <TabsTrigger key={section.id} value={section.id}>
+                {section.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-      <section className="grid w-full gap-4">
-        <Card className="overflow-hidden">
-          <CardHeader>
-            {chart.loading ? (
-              <>
-                <Skeleton className="h-5 w-28" />
-                <Skeleton className="h-4 w-72 max-w-full" />
-              </>
-            ) : (
-              <>
-                <CardTitle>近七日趨勢</CardTitle>
-                <CardDescription>依日期彙整的網站造訪與聯絡表單數量</CardDescription>
-              </>
-            )}
-          </CardHeader>
-          <CardContent className="px-2 sm:px-6">
-            {chart.loading ? (
-              <DashboardChartSkeleton />
-            ) : (
-              <ChartContainer config={chartConfig} className="h-[360px] w-full overflow-hidden">
-                <AreaChart accessibilityLayer data={chartData} margin={{ left: 8, right: 24, top: 18, bottom: 4 }}>
-                  <defs>
-                    <linearGradient id="fillVisitors" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-visitors)" stopOpacity={0.72} />
-                      <stop offset="95%" stopColor="var(--color-visitors)" stopOpacity={0.04} />
-                    </linearGradient>
-                    <linearGradient id="fillContact" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-contact)" stopOpacity={0.45} />
-                      <stop offset="95%" stopColor="var(--color-contact)" stopOpacity={0.03} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis hide domain={[0, (dataMax) => Math.max(4, Math.ceil(dataMax + 1))]} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend
-                    content={<InteractiveChartLegend hiddenSeries={hiddenSeries} onToggle={toggleSeries} />}
-                  />
-                  <Area
-                    dataKey="visitors"
-                    type="monotone"
-                    fill="url(#fillVisitors)"
-                    hide={hiddenSeries.includes('visitors')}
-                    stroke="var(--color-visitors)"
-                    strokeWidth={2}
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="contact"
-                    type="monotone"
-                    fill="url(#fillContact)"
-                    hide={hiddenSeries.includes('contact')}
-                    stroke="var(--color-contact)"
-                    strokeWidth={2}
-                    stackId="b"
-                  />
-                </AreaChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+        {siteSections.map((section) => (
+          <TabsContent key={section.id} value={section.id}>
+            <SiteSection
+              section={section}
+              cards={cardItems}
+              chartData={chartData}
+              loading={{ cards: cards.loading, chart: chart.loading }}
+              hiddenSeries={hiddenSeries}
+              onToggle={toggleSeries}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
     </DashboardShell>
   );
 }
