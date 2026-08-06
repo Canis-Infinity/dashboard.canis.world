@@ -38,7 +38,7 @@ export default function Login() {
             <aside className="relative hidden overflow-hidden bg-zinc-950 p-10 text-white md:flex md:flex-col md:justify-between">
               <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
               <div className="flex items-center gap-3">
-                <img src="/favicon.png" alt="Canis Den" className="size-10 rounded-lg object-cover" />
+                <img src="/favicon.jpg" alt="Canis Den" className="size-10 rounded-lg object-cover" />
                 <div className="grid leading-tight">
                   <span className="text-lg font-semibold">Canis Den</span>
                   <span className="text-xs text-white/60">Dashboard</span>

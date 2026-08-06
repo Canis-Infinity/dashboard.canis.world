@@ -11,13 +11,13 @@ export const metadata = {
   metadataBase: new URL('https://dashboard.canis.world'),
   title: '後台｜Canis Den',
   description: 'Canis Den 網站後台',
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.jpg", type: "image/jpeg", sizes: "512x512" },
     ],
-    apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "512x512" }],
+    apple: [{ url: "/favicon.jpg", type: "image/jpeg", sizes: "512x512" }],
   },
   keywords: [
     '後台｜Canis Den',
@@ -84,8 +84,8 @@ export default function RootLayout({ children }) {
     <html lang="zh-Hant" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
-        <link rel="apple-touch-icon" href="/apple-icon.png" type="image/png" sizes="512x512" />
+        <link rel="icon" href="/favicon.jpg" type="image/jpeg" sizes="512x512" />
+        <link rel="apple-touch-icon" href="/favicon.jpg" type="image/jpeg" sizes="512x512" />
       </head>
       <body>
         <ThemeProvider>

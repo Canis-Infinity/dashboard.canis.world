@@ -95,7 +95,7 @@ export function AppSidebar(props) {
               render={<Link href="/" />}
             >
                 <Image
-                  src="/favicon.png"
+                  src="/favicon.jpg"
                   alt="Canis Den"
                   width={24}
                   height={24}
