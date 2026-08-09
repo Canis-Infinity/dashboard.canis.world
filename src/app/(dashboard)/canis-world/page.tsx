@@ -8,11 +8,14 @@ import {
   ArrowRight,
   ArrowUp,
   Check,
+  FilePenLine,
   ImageIcon,
   ImagePlus,
   Pencil,
   Plus,
+  RotateCcw,
   Save,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -20,6 +23,7 @@ import DashboardShell from "@/components/layout/DashboardShell";
 import { ContentCollections } from "@/components/features/canis-world/ContentCollections";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { DatePicker } from "@/components/shared/DatePicker";
+import { DateRangePicker } from "@/components/shared/DateRangePicker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +54,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
   Field as CheckboxField,
@@ -91,13 +100,20 @@ const emptyEntry = {
   content: "",
   category: "出遊",
   mood: "",
-  occurredAt: new Date().toISOString().slice(0, 10),
+  occurredAt: "",
   tags: [],
   images: [],
   featured: false,
   published: true,
+  draft: false,
   priority: 100,
 };
+
+function currentDateValue() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+}
 
 const managementSections = [
   { value: "status", label: "今日狀態" },
@@ -130,6 +146,113 @@ const baseMoodOptions = [
   "慢慢整理",
 ];
 
+const publicationFilters = [
+  { value: "all", label: "所有狀態" },
+  { value: "published", label: "公開" },
+  { value: "hidden", label: "隱藏" },
+  { value: "draft", label: "草稿" },
+];
+
+const featuredFilters = [
+  { value: "all", label: "全部" },
+  { value: "featured", label: "精選" },
+  { value: "normal", label: "一般" },
+];
+
+const emptyEntryFilters = {
+  title: "",
+  dateRange: { from: undefined, to: undefined },
+  category: "all",
+  featured: "all",
+  status: "all",
+};
+
+function selectedOptionLabel(options, value, fallback) {
+  return options.find((option) => option.value === value)?.label || fallback;
+}
+
+function filterEntries(items, filters) {
+  const title = String(filters.title || "")
+    .trim()
+    .toLowerCase();
+
+  return items.filter((entry) => {
+    if (
+      title &&
+      !String(entry.title || "")
+        .toLowerCase()
+        .includes(title)
+    ) {
+      return false;
+    }
+
+    if (filters.dateRange?.from) {
+      const occurredAt = new Date(entry.occurredAt);
+      const from = new Date(filters.dateRange.from);
+      const to = new Date(filters.dateRange.to || filters.dateRange.from);
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+      if (
+        Number.isNaN(occurredAt.getTime()) ||
+        occurredAt < from ||
+        occurredAt > to
+      ) {
+        return false;
+      }
+    }
+
+    if (filters.category !== "all" && entry.category !== filters.category) {
+      return false;
+    }
+
+    if (filters.featured === "featured" && entry.featured !== true) {
+      return false;
+    }
+    if (filters.featured === "normal" && entry.featured === true) {
+      return false;
+    }
+
+    if (
+      filters.status === "published" &&
+      (entry.published === false || entry.draft === true)
+    ) {
+      return false;
+    }
+    if (
+      filters.status === "hidden" &&
+      (entry.published !== false || entry.draft === true)
+    ) {
+      return false;
+    }
+    if (filters.status === "draft" && entry.draft !== true) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function publicationState(item) {
+  if (item.draft === true) return "draft";
+  if (item.published === false) return "hidden";
+  return "published";
+}
+
+function PublicationBadge({ item }) {
+  const state = publicationState(item);
+  const labels = {
+    published: "公開",
+    hidden: "隱藏",
+    draft: "草稿",
+  };
+
+  return (
+    <Badge variant={state === "published" ? "default" : "secondary"}>
+      {labels[state]}
+    </Badge>
+  );
+}
+
 function normalizeEntry(entry = emptyEntry) {
   return {
     ...emptyEntry,
@@ -146,12 +269,6 @@ function resolveImagePreview(path) {
   if (!path) return "";
   if (/^https?:\/\//.test(path)) return path;
   if (path.startsWith("/uploads/")) return path;
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    return `http://localhost:7654${path.startsWith("/") ? path : `/${path}`}`;
-  }
   return `https://canis.world${path.startsWith("/") ? path : `/${path}`}`;
 }
 
@@ -216,14 +333,14 @@ function splitList(value, separator = ",") {
 
 function uniqueOptions(baseOptions, entries, key, excludedOptions = []) {
   const excluded = new Set(
-    excludedOptions.map((option) => String(option).toLowerCase())
+    excludedOptions.map((option) => String(option).toLowerCase()),
   );
 
   return Array.from(
     new Set([
       ...baseOptions,
       ...entries.map((entry) => entry?.[key]).filter(Boolean),
-    ])
+    ]),
   ).filter((option) => !excluded.has(String(option).toLowerCase()));
 }
 
@@ -372,8 +489,12 @@ export default function CanisWorldPage() {
   const [removeImageIndex, setRemoveImageIndex] = useState(null);
   const [mutating, setMutating] = useState(false);
   const [activeSection, setActiveSection] = useState("status");
+  const [entryDraftFilters, setEntryDraftFilters] = useState(emptyEntryFilters);
+  const [entryAppliedFilters, setEntryAppliedFilters] =
+    useState(emptyEntryFilters);
   const settingsFormRef = useRef(null);
   const editorFormRef = useRef(null);
+  const entrySaveIntentRef = useRef("save");
 
   useEffect(() => {
     if (!data) return;
@@ -461,7 +582,13 @@ export default function CanisWorldPage() {
       : 1;
     setEditingId("");
     setRemoveImageIndex(null);
-    setDraft(normalizeEntry({ ...emptyEntry, priority: nextPriority }));
+    setDraft(
+      normalizeEntry({
+        ...emptyEntry,
+        occurredAt: currentDateValue(),
+        priority: nextPriority,
+      }),
+    );
     setEditorOpen(true);
   }
 
@@ -517,16 +644,20 @@ export default function CanisWorldPage() {
     setMutating(true);
     try {
       const { _id, tagsText, ...fields } = draft;
+      const asDraft = entrySaveIntentRef.current === "draft";
+      entrySaveIntentRef.current = "save";
       const payload = {
         ...fields,
         tags: splitList(tagsText),
         images: draft.images || [],
         priority: Number(draft.priority) || 0,
+        draft: asDraft ? true : false,
+        published: asDraft ? false : fields.published !== false,
       };
       const result = editingId
         ? await updateCanisWorldEntry(editingId, payload)
         : await createCanisWorldEntry(payload);
-      toast.success(result.message || "日常紀錄已儲存");
+      toast.success(result.message || `日常紀錄${asDraft ? "草稿" : ""}已儲存`);
       setEditorOpen(false);
       await refetch();
     } catch (saveError) {
@@ -559,9 +690,30 @@ export default function CanisWorldPage() {
     [entries],
   );
   const publishedEntries = useMemo(
-    () => sortedEntries.filter((entry) => entry.published),
+    () =>
+      sortedEntries.filter(
+        (entry) => entry.published !== false && entry.draft !== true,
+      ),
     [sortedEntries],
   );
+  const filteredEntries = useMemo(
+    () => filterEntries(sortedEntries, entryAppliedFilters),
+    [entryAppliedFilters, sortedEntries],
+  );
+
+  function updateEntryDraftFilter(key, value) {
+    setEntryDraftFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function applyEntryFilters(event) {
+    event.preventDefault();
+    setEntryAppliedFilters(entryDraftFilters);
+  }
+
+  function resetEntryFilters() {
+    setEntryDraftFilters(emptyEntryFilters);
+    setEntryAppliedFilters(emptyEntryFilters);
+  }
   const heroSourceEntry = useMemo(() => {
     const selectedId = settings?.content?.heroEntryId;
     return (
@@ -595,9 +747,11 @@ export default function CanisWorldPage() {
     }));
   }
 
-  async function moveEntry(entry, direction) {
-    const index = sortedEntries.findIndex((current) => current._id === entry._id);
-    const target = sortedEntries[index + direction];
+  async function moveEntry(entry, direction, visibleEntries = sortedEntries) {
+    const index = visibleEntries.findIndex(
+      (current) => current._id === entry._id,
+    );
+    const target = visibleEntries[index + direction];
     if (index < 0 || !target) return;
 
     const currentPriority = Number(entry.priority) || index + 1;
@@ -633,9 +787,11 @@ export default function CanisWorldPage() {
         ),
         cell: ({ row }) => (
           <div>
-            <div className="font-medium">{row.original.title}</div>
+            <div className="font-medium">
+              {row.original.title || "未命名草稿"}
+            </div>
             <div className="line-clamp-1 text-xs text-muted-foreground">
-              {row.original.excerpt}
+              {row.original.excerpt || "尚未填寫摘要"}
             </div>
           </div>
         ),
@@ -673,11 +829,7 @@ export default function CanisWorldPage() {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="狀態" />
         ),
-        cell: ({ row }) => (
-          <Badge variant={row.original.published ? "default" : "secondary"}>
-            {row.original.published ? "公開" : "隱藏"}
-          </Badge>
-        ),
+        cell: ({ row }) => <PublicationBadge item={row.original} />,
       },
       {
         id: "actions",
@@ -688,9 +840,11 @@ export default function CanisWorldPage() {
           <div className="flex justify-end gap-1">
             <EntryOrderButtons
               entry={row.original}
-              entries={sortedEntries}
+              entries={filteredEntries}
               disabled={mutating}
-              onMove={moveEntry}
+              onMove={(entry, direction) =>
+                moveEntry(entry, direction, filteredEntries)
+              }
             />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -725,7 +879,7 @@ export default function CanisWorldPage() {
         ),
       },
     ],
-    [mutating, sortedEntries],
+    [filteredEntries, mutating],
   );
 
   const traitsText =
@@ -733,11 +887,11 @@ export default function CanisWorldPage() {
     (settings?.profile?.traits || []).join(", ");
   const categoryOptions = useMemo(
     () => uniqueOptions(baseCategoryOptions, entries, "category", ["daily"]),
-    [entries]
+    [entries],
   );
   const moodOptions = useMemo(
     () => uniqueOptions(baseMoodOptions, entries, "mood"),
-    [entries]
+    [entries],
   );
   const activeSectionLabel =
     managementSections.find((section) => section.value === activeSection)
@@ -772,10 +926,7 @@ export default function CanisWorldPage() {
             <div className="flex flex-col gap-4 border-b border-border md:flex-row md:items-end md:justify-between">
               <TabsList variant="line">
                 {managementSections.map((section) => (
-                  <TabsTrigger
-                    key={section.value}
-                    value={section.value}
-                  >
+                  <TabsTrigger key={section.value} value={section.value}>
                     {section.label}
                   </TabsTrigger>
                 ))}
@@ -858,7 +1009,7 @@ export default function CanisWorldPage() {
                   <Slider
                     id="status-completeness"
                     value={Number(settings.status?.completeness) || 0}
-                    min={0}
+                    min={-100}
                     max={100}
                     step={1}
                     onValueChange={(value) =>
@@ -963,10 +1114,10 @@ export default function CanisWorldPage() {
                     }
                   />
                   <Field
-                  id="header-link-url"
-                  label="右上按鈕連結"
-                  type="url"
-                  placeholder="例如：http://example.com"
+                    id="header-link-url"
+                    label="右上按鈕連結"
+                    type="url"
+                    placeholder="例如：http://example.com"
                     value={settings.content?.headerLinkUrl}
                     onChange={(value) => updateContent("headerLinkUrl", value)}
                   />
@@ -974,9 +1125,7 @@ export default function CanisWorldPage() {
                     <div className="grid max-w-2xl gap-2">
                       <Label htmlFor="hero-entry">關聯日常紀錄</Label>
                       <Select
-                        value={
-                          settings.content?.heroEntryId || "__featured__"
-                        }
+                        value={settings.content?.heroEntryId || "__featured__"}
                         onValueChange={selectHeroEntry}
                       >
                         <SelectTrigger id="hero-entry" className="w-full">
@@ -987,13 +1136,13 @@ export default function CanisWorldPage() {
                             自動使用第一筆精選日常
                           </SelectItem>
                           {publishedEntries.map((entry) => (
-                              <SelectItem key={entry._id} value={entry._id}>
-                                {entry.title}
-                                {entry.occurredAt
-                                  ? ` · ${String(entry.occurredAt).slice(0, 10)}`
-                                  : ""}
-                              </SelectItem>
-                            ))}
+                            <SelectItem key={entry._id} value={entry._id}>
+                              {entry.title}
+                              {entry.occurredAt
+                                ? ` · ${String(entry.occurredAt).slice(0, 10)}`
+                                : ""}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <p className="text-xs leading-5 text-muted-foreground">
@@ -1134,28 +1283,172 @@ export default function CanisWorldPage() {
             activeSection={activeSection}
           />
 
-          <Card
-            className={`overflow-hidden ${
+          <div
+            className={`grid gap-6 ${
               activeSection !== "entries" ? "hidden" : ""
             }`}
           >
-            <CardHeader className="gap-1.5 space-y-0">
-              <CardTitle>日常紀錄</CardTitle>
-              <CardDescription>
-                公開後會同步顯示在 canis.world。
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <DataTable
-                columns={columns}
-                data={sortedEntries}
-                enableSorting={false}
-                pageSize={10}
-                emptyText="尚未建立日常紀錄"
-                emptyDescription="新增第一筆日常後，Canis World 就會開始有生活感。"
-              />
-            </CardContent>
-          </Card>
+            <Card aria-label="日常紀錄篩選">
+              <CardContent className="p-4 sm:p-6">
+                <form className="grid gap-5" onSubmit={applyEntryFilters}>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+                    <div className="grid gap-2 xl:col-span-3">
+                      <Label htmlFor="entry-title-filter">標題</Label>
+                      <InputGroup>
+                        <InputGroupAddon>
+                          <Search />
+                        </InputGroupAddon>
+                        <InputGroupInput
+                          id="entry-title-filter"
+                          value={entryDraftFilters.title}
+                          onChange={(event) =>
+                            updateEntryDraftFilter("title", event.target.value)
+                          }
+                          placeholder="搜尋標題"
+                        />
+                      </InputGroup>
+                    </div>
+
+                    <DateRangePicker
+                      id="entry-date-range-filter"
+                      label="日期"
+                      value={entryDraftFilters.dateRange}
+                      onChange={(value) =>
+                        updateEntryDraftFilter("dateRange", value)
+                      }
+                      includeHiddenInputs={false}
+                      numberOfMonths={2}
+                      className="xl:col-span-3"
+                    />
+
+                    <div className="grid gap-2 xl:col-span-2">
+                      <Label htmlFor="entry-category-filter">分類</Label>
+                      <Select
+                        value={entryDraftFilters.category}
+                        onValueChange={(value) =>
+                          updateEntryDraftFilter("category", value)
+                        }
+                      >
+                        <SelectTrigger
+                          id="entry-category-filter"
+                          className="w-full"
+                        >
+                          <SelectValue>
+                            {entryDraftFilters.category === "all"
+                              ? "所有分類"
+                              : entryDraftFilters.category}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">所有分類</SelectItem>
+                          {categoryOptions.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2 xl:col-span-2">
+                      <Label htmlFor="entry-featured-filter">精選</Label>
+                      <Select
+                        value={entryDraftFilters.featured}
+                        onValueChange={(value) =>
+                          updateEntryDraftFilter("featured", value)
+                        }
+                      >
+                        <SelectTrigger
+                          id="entry-featured-filter"
+                          className="w-full"
+                        >
+                          <SelectValue>
+                            {selectedOptionLabel(
+                              featuredFilters,
+                              entryDraftFilters.featured,
+                              "全部",
+                            )}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {featuredFilters.map((filter) => (
+                            <SelectItem key={filter.value} value={filter.value}>
+                              {filter.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2 xl:col-span-2">
+                      <Label htmlFor="entry-status-filter">狀態</Label>
+                      <Select
+                        value={entryDraftFilters.status}
+                        onValueChange={(value) =>
+                          updateEntryDraftFilter("status", value)
+                        }
+                      >
+                        <SelectTrigger
+                          id="entry-status-filter"
+                          className="w-full"
+                        >
+                          <SelectValue>
+                            {selectedOptionLabel(
+                              publicationFilters,
+                              entryDraftFilters.status,
+                              "所有狀態",
+                            )}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {publicationFilters.map((filter) => (
+                            <SelectItem key={filter.value} value={filter.value}>
+                              {filter.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 sm:min-w-24"
+                      onClick={resetEntryFilters}
+                    >
+                      <RotateCcw className="size-4" />
+                      重設
+                    </Button>
+                    <Button type="submit" className="h-9 sm:min-w-28">
+                      <Search className="size-4" />
+                      套用篩選
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden">
+              <CardHeader className="gap-1.5 space-y-0">
+                <CardTitle>日常紀錄</CardTitle>
+                <CardDescription>
+                  公開後會同步顯示在 canis.world；隱藏與草稿只保留在後台。
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={columns}
+                  data={filteredEntries}
+                  enableSorting={false}
+                  pageSize={10}
+                  emptyText="尚未建立日常紀錄"
+                  emptyDescription="調整篩選或新增日常後會出現在這裡。"
+                />
+              </CardContent>
+            </Card>
+          </div>
         </>
       )}
 
@@ -1164,7 +1457,7 @@ export default function CanisWorldPage() {
           <DialogHeader className="min-w-0 px-4 pt-4 pr-12 text-left sm:px-6 sm:pt-6">
             <DialogTitle>{editingId ? "編輯日常" : "新增日常"}</DialogTitle>
             <DialogDescription className="text-pretty">
-              管理日常文字、分類、照片與公開狀態。
+              管理日常文字、分類、照片與公開、隱藏或草稿狀態。
             </DialogDescription>
           </DialogHeader>
           <form
@@ -1212,7 +1505,9 @@ export default function CanisWorldPage() {
                     label="標籤，逗號分隔"
                     placeholder="例如：出遊, 朋友, 基地生活"
                     value={draft.tagsText}
-                    onChange={(value) => setDraft({ ...draft, tagsText: value })}
+                    onChange={(value) =>
+                      setDraft({ ...draft, tagsText: value })
+                    }
                   />
                 </div>
               </div>
@@ -1394,16 +1689,16 @@ export default function CanisWorldPage() {
                 </FieldLabel>
                 <FieldLabel className="cursor-pointer rounded-lg border bg-muted/10 p-4 transition-colors hover:bg-muted/30">
                   <CheckboxField className="grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
-                  <Checkbox
-                    checked={draft.published}
-                    onCheckedChange={(checked) =>
-                      setDraft({ ...draft, published: checked === true })
-                    }
-                  />
+                    <Checkbox
+                      checked={draft.published}
+                      onCheckedChange={(checked) =>
+                        setDraft({ ...draft, published: checked === true })
+                      }
+                    />
                     <FieldContent>
                       <span className="text-sm font-medium">公開顯示</span>
                       <FieldDescription>
-                        勾選後會同步顯示在 canis.world；關閉時只保留在後台管理。
+                        勾選後會同步顯示在 canis.world；關閉時會標記為隱藏。
                       </FieldDescription>
                     </FieldContent>
                   </CheckboxField>
@@ -1416,7 +1711,25 @@ export default function CanisWorldPage() {
                   取消
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={mutating}>
+              <Button
+                type="submit"
+                variant="secondary"
+                disabled={mutating || draft.published !== false}
+                formNoValidate
+                onClick={() => {
+                  entrySaveIntentRef.current = "draft";
+                }}
+              >
+                <FilePenLine className="size-4" />
+                存為草稿
+              </Button>
+              <Button
+                type="submit"
+                disabled={mutating}
+                onClick={() => {
+                  entrySaveIntentRef.current = "save";
+                }}
+              >
                 {mutating ? "儲存中..." : "儲存"}
               </Button>
             </DialogFooter>

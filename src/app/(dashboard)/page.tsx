@@ -130,23 +130,62 @@ function StatCard({ item, loading }) {
 }
 
 function DashboardChartSkeleton() {
-  const heights = ['38%', '54%', '46%', '72%', '61%', '82%', '68%'];
+  const ticks = Array.from({ length: 7 });
+  const gridLines = Array.from({ length: 4 });
 
   return (
     <div className="grid h-[360px] grid-rows-[1fr_auto_auto] gap-3 px-2 pb-2 pt-4" aria-label="正在載入近七日趨勢">
-      <div className="relative flex min-h-0 items-end gap-2 border-b border-l px-3 sm:gap-4">
+      <div className="relative min-h-0 border-b border-l">
         <div className="pointer-events-none absolute inset-0 grid grid-rows-4">
-          {Array.from({ length: 4 }).map((_, index) => <div key={index} className="border-t border-border/70" />)}
+          {gridLines.map((_, index) => <div key={index} className="border-t border-border/70" />)}
         </div>
-        {heights.map((height, index) => (
-          <div key={index} className="relative flex h-full flex-1 items-end justify-center gap-1">
-            <Skeleton className="w-2/5 rounded-b-none" style={{ height }} />
-            <Skeleton className="w-1/4 rounded-b-none opacity-60" style={{ height: `${Math.max(18, Number.parseInt(height, 10) - 18)}%` }} />
-          </div>
-        ))}
+        <svg
+          className="absolute inset-0 size-full"
+          viewBox="0 0 700 240"
+          preserveAspectRatio="none"
+          role="presentation"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="dashboard-skeleton-area-a" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+            </linearGradient>
+            <linearGradient id="dashboard-skeleton-area-b" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+          <path
+            className="animate-pulse text-primary/70"
+            d="M0 216 C80 186 112 92 174 72 C236 52 256 86 316 128 C374 168 416 184 700 202 L700 240 L0 240 Z"
+            fill="url(#dashboard-skeleton-area-a)"
+          />
+          <path
+            className="animate-pulse text-primary/80"
+            d="M0 216 C80 186 112 92 174 72 C236 52 256 86 316 128 C374 168 416 184 700 202"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          <path
+            className="animate-pulse text-muted-foreground/45"
+            d="M0 218 C132 216 154 214 210 210 C282 206 320 146 388 140 C458 134 514 188 700 196 L700 240 L0 240 Z"
+            fill="url(#dashboard-skeleton-area-b)"
+          />
+          <path
+            className="animate-pulse text-muted-foreground/55"
+            d="M0 218 C132 216 154 214 210 210 C282 206 320 146 388 140 C458 134 514 188 700 196"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </svg>
       </div>
       <div className="grid grid-cols-7 gap-2 px-3 sm:gap-4">
-        {heights.map((_, index) => <Skeleton key={index} className="mx-auto h-3 w-8 max-w-full" />)}
+        {ticks.map((_, index) => <Skeleton key={index} className="mx-auto h-3 w-8 max-w-full" />)}
       </div>
       <div className="flex justify-center gap-5">
         <div className="flex items-center gap-2"><Skeleton className="size-2.5" /><Skeleton className="h-3 w-14" /></div>
