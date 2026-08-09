@@ -92,6 +92,7 @@ import {
   updateCanisWorldSettings,
   uploadCanisWorldMedia,
 } from "@/services/canisWorldService";
+import { apiAssetUrl } from "@/libs/url";
 import { getErrorMessage } from "@/utils/apiError";
 
 const emptyEntry = {
@@ -158,6 +159,21 @@ const featuredFilters = [
   { value: "featured", label: "精選" },
   { value: "normal", label: "一般" },
 ];
+
+function getCanisWorldPublicUrl() {
+  if (process.env.NEXT_PUBLIC_CANIS_WORLD_URL) {
+    return process.env.NEXT_PUBLIC_CANIS_WORLD_URL;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+  ) {
+    return `${window.location.protocol}//${window.location.hostname}:7654`;
+  }
+
+  return "https://canis.world";
+}
 
 const emptyEntryFilters = {
   title: "",
@@ -268,7 +284,8 @@ function normalizeEntry(entry = emptyEntry) {
 function resolveImagePreview(path) {
   if (!path) return "";
   if (/^https?:\/\//.test(path)) return path;
-  if (path.startsWith("/uploads/")) return path;
+  if (path.startsWith("/uploads/")) return apiAssetUrl(path);
+  if (path.startsWith("/daily/")) return `${getCanisWorldPublicUrl()}${path}`;
   return `https://canis.world${path.startsWith("/") ? path : `/${path}`}`;
 }
 

@@ -9,6 +9,7 @@ services:
       PORT: 7343
       HOSTNAME: 0.0.0.0
       INTERNAL_API_BASE_URL: ${INTERNAL_API_BASE_URL:-http://host.docker.internal:7344}
+      NEXT_PUBLIC_CANIS_WORLD_URL: ${NEXT_PUBLIC_CANIS_WORLD_URL:-http://localhost:7654}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
