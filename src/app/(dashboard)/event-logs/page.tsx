@@ -395,7 +395,7 @@ function EventLogsContent() {
               </div>
             </div>
           ) : null}
-          <DialogFooter className="shrink-0 border-t px-6 py-4">
+          <DialogFooter className="m-0 shrink-0 rounded-none border-t px-6 py-4">
             <DialogClose asChild>
               <Button type="button" variant="outline">關閉</Button>
             </DialogClose>

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ExternalLink, Pencil, Plus, Trash2 } from 'lucide-react';
 import DashboardShell from '@/components/layout/DashboardShell';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { IconCombobox, normalizeLucideIconName } from '@/components/shared/IconCombobox';
+import { IconCombobox } from '@/components/shared/IconCombobox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,7 +61,7 @@ export default function LinksPage() {
 
   function openEdit(link) {
     setEditingIndex(links.findIndex((item) => item === link));
-    setDraft({ ...link, icon: normalizeLucideIconName(link.icon), title: { ...link.title }, description: { ...link.description }, domain: [...(link.domain || [])] });
+    setDraft({ ...link, title: { ...link.title }, description: { ...link.description }, domain: [...(link.domain || [])] });
     setEditorOpen(true);
   }
 
@@ -181,7 +181,7 @@ export default function LinksPage() {
               <section className="grid gap-4 px-6 py-5">
                 <div><h3 className="text-sm font-semibold">基本資料</h3><p className="text-xs text-muted-foreground">設定目標網址與圖示；排序請直接在外部表格調整。</p></div>
                 <div className="grid gap-2"><Label htmlFor="href">目標網址</Label><Input id="href" type="url" value={draft.href || ''} placeholder="例如：http://example.com" onChange={(event) => setDraft({ ...draft, href: event.target.value })} required /></div>
-                <div className="grid gap-4 md:grid-cols-2"><div className="grid gap-2"><Label htmlFor="icon">圖示</Label><IconCombobox id="icon" value={draft.icon || ''} placeholder="搜尋 Lucide 圖示" onValueChange={(icon) => setDraft({ ...draft, icon })} required /></div><div className="grid gap-2"><Label htmlFor="priority">排序</Label><Input id="priority" type="number" value={draft.priority} readOnly aria-readonly="true" className="bg-muted/40" /></div></div>
+                <div className="grid gap-4 md:grid-cols-2"><div className="grid gap-2"><Label htmlFor="icon">圖示</Label><IconCombobox id="icon" value={draft.icon || ''} placeholder="搜尋 Canis Den 支援的圖示" includeBrandIcons onValueChange={(icon) => setDraft({ ...draft, icon })} required /></div><div className="grid gap-2"><Label htmlFor="priority">排序</Label><Input id="priority" type="number" value={draft.priority} readOnly aria-readonly="true" className="bg-muted/40" /></div></div>
               </section>
               <section className="grid gap-4 border-t px-6 py-5">
                 <div><h3 className="text-sm font-semibold">前台文案</h3><p className="text-xs text-muted-foreground">分別維護繁體中文與英文版本。</p></div>
@@ -200,7 +200,7 @@ export default function LinksPage() {
                 <FieldLabel htmlFor="link-enabled" className="cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/30"><Field className="grid-cols-[minmax(0,1fr)_auto] items-center gap-4"><FieldContent><span className="text-sm font-medium">啟用此連結</span><FieldDescription>關閉後仍會保留資料，但不會顯示在 Canis Den 網站。</FieldDescription></FieldContent><Switch id="link-enabled" checked={draft.enabled} onCheckedChange={(checked) => setDraft({ ...draft, enabled: checked })} /></Field></FieldLabel>
               </section>
             </div>
-            <DialogFooter className="border-t px-6 py-4"><DialogClose asChild><Button type="button" variant="outline" disabled={mutating}>取消</Button></DialogClose><Button type="submit" disabled={mutating}>{mutating ? '儲存中...' : '儲存'}</Button></DialogFooter>
+            <DialogFooter className="m-0 rounded-none border-t px-6 py-4"><DialogClose asChild><Button type="button" variant="outline" disabled={mutating}>取消</Button></DialogClose><Button type="submit" disabled={mutating}>{mutating ? '儲存中...' : '儲存'}</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

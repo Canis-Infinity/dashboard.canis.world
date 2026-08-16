@@ -847,7 +847,7 @@ export function ContentCollections({
                 </FieldLabel>
               </div>
             </div>
-            <DialogFooter className="border-t px-6 py-4">
+            <DialogFooter className="m-0 rounded-none border-t px-6 py-4">
               <DialogClose asChild>
                 <Button type="button" variant="outline" disabled={saving}>
                   取消

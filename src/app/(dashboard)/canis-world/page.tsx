@@ -11,11 +11,13 @@ import {
   FilePenLine,
   ImageIcon,
   ImagePlus,
+  LoaderCircle,
   Pencil,
   Plus,
   RotateCcw,
   Save,
   Search,
+  Star,
   Trash2,
   X,
 } from "lucide-react";
@@ -25,6 +27,15 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { DatePicker } from "@/components/shared/DatePicker";
 import { DateRangePicker } from "@/components/shared/DateRangePicker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +71,11 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
 import {
   Field as CheckboxField,
   FieldContent,
@@ -109,6 +125,8 @@ const emptyEntry = {
   draft: false,
   priority: 100,
 };
+
+const MAX_FEATURED_ENTRIES = 2;
 
 function currentDateValue() {
   const now = new Date();
@@ -503,15 +521,55 @@ export default function CanisWorldPage() {
   const [draft, setDraft] = useState(normalizeEntry());
   const [editingId, setEditingId] = useState("");
   const [removeId, setRemoveId] = useState("");
+  const [featuredLimitOpen, setFeaturedLimitOpen] = useState(false);
   const [removeImageIndex, setRemoveImageIndex] = useState(null);
   const [mutating, setMutating] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [activeSection, setActiveSection] = useState("status");
   const [entryDraftFilters, setEntryDraftFilters] = useState(emptyEntryFilters);
   const [entryAppliedFilters, setEntryAppliedFilters] =
     useState(emptyEntryFilters);
   const settingsFormRef = useRef(null);
   const editorFormRef = useRef(null);
+  const mediaUploadInputRef = useRef(null);
   const entrySaveIntentRef = useRef("save");
+
+  useEffect(() => {
+    function syncSectionFromQuery() {
+      const url = new URL(window.location.href);
+      const requestedSection = url.searchParams.get("tab");
+      const nextSection = managementSections.some(
+        (section) => section.value === requestedSection,
+      )
+        ? requestedSection
+        : "status";
+
+      setActiveSection(nextSection);
+      if (requestedSection !== nextSection) {
+        url.searchParams.set("tab", nextSection);
+        window.history.replaceState(window.history.state, "", url);
+      }
+    }
+
+    syncSectionFromQuery();
+    window.addEventListener("popstate", syncSectionFromQuery);
+    return () => window.removeEventListener("popstate", syncSectionFromQuery);
+  }, []);
+
+  function selectActiveSection(nextSection) {
+    if (
+      !managementSections.some((section) => section.value === nextSection)
+    ) {
+      return;
+    }
+
+    setActiveSection(nextSection);
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("tab") === nextSection) return;
+    url.searchParams.set("tab", nextSection);
+    window.history.pushState(window.history.state, "", url);
+  }
 
   useEffect(() => {
     if (!data) return;
@@ -529,7 +587,7 @@ export default function CanisWorldPage() {
       if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
         return;
       event.preventDefault();
-      if (savingSettings || mutating) return;
+      if (savingSettings || mutating || uploadingImages) return;
 
       const form = editorOpen ? editorFormRef.current : settingsFormRef.current;
       form?.requestSubmit();
@@ -537,7 +595,7 @@ export default function CanisWorldPage() {
 
     window.addEventListener("keydown", handleSaveShortcut);
     return () => window.removeEventListener("keydown", handleSaveShortcut);
-  }, [editorOpen, mutating, savingSettings]);
+  }, [editorOpen, mutating, savingSettings, uploadingImages]);
 
   function updateStatus(key, value) {
     setSettings((current) => ({
@@ -619,20 +677,36 @@ export default function CanisWorldPage() {
   async function uploadImages(event) {
     const files = event.target.files;
     if (!files?.length) return;
-    setMutating(true);
+    setUploadingImages(true);
+    setUploadProgress(0);
     try {
-      const result = await uploadCanisWorldMedia(files);
+      const result = await uploadCanisWorldMedia(files, {
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) {
+            setUploadProgress((current) => Math.max(current, 15));
+            return;
+          }
+
+          setUploadProgress(
+            Math.round((progressEvent.loaded / progressEvent.total) * 100),
+          );
+        },
+      });
       const paths = result.data.map((item) => item.path);
       setDraft((current) => ({
         ...current,
         images: [...(current.images || []), ...paths],
       }));
+      setUploadProgress(100);
       toast.success(result.message || "圖片上傳成功");
     } catch (uploadError) {
       toast.error(getErrorMessage(uploadError, "圖片上傳失敗"));
     } finally {
       event.target.value = "";
-      setMutating(false);
+      window.setTimeout(() => {
+        setUploadingImages(false);
+        setUploadProgress(0);
+      }, 350);
     }
   }
 
@@ -658,6 +732,14 @@ export default function CanisWorldPage() {
 
   async function applyDraft(event) {
     event.preventDefault();
+    const featuredCount = entries.filter(
+      (entry) => entry.featured === true && entry._id !== editingId,
+    ).length;
+    if (draft.featured && featuredCount >= MAX_FEATURED_ENTRIES) {
+      setFeaturedLimitOpen(true);
+      return;
+    }
+
     setMutating(true);
     try {
       const { _id, tagsText, ...fields } = draft;
@@ -795,6 +877,34 @@ export default function CanisWorldPage() {
     }
   }
 
+  async function toggleFeatured(entry) {
+    const nextFeatured = entry.featured !== true;
+    const featuredCount = entries.filter(
+      (current) => current.featured === true && current._id !== entry._id,
+    ).length;
+
+    if (nextFeatured && featuredCount >= MAX_FEATURED_ENTRIES) {
+      setFeaturedLimitOpen(true);
+      return;
+    }
+
+    setMutating(true);
+    try {
+      const result = await updateCanisWorldEntry(entry._id, {
+        ...stripEntryMeta(entry),
+        featured: nextFeatured,
+      });
+      toast.success(
+        result.message || (nextFeatured ? "已設為精選" : "已取消精選"),
+      );
+      await refetch();
+    } catch (featuredError) {
+      toast.error(getErrorMessage(featuredError, "精選狀態更新失敗"));
+    } finally {
+      setMutating(false);
+    }
+  }
+
   const columns = useMemo(
     () => [
       {
@@ -869,6 +979,37 @@ export default function CanisWorldPage() {
                   type="button"
                   size="icon"
                   variant="ghost"
+                  className={
+                    row.original.featured
+                      ? "text-amber-400 hover:text-amber-400"
+                      : undefined
+                  }
+                  disabled={mutating}
+                  aria-label={
+                    row.original.featured ? "取消精選" : "設為精選"
+                  }
+                  aria-pressed={row.original.featured === true}
+                  onClick={() => toggleFeatured(row.original)}
+                >
+                  <Star
+                    className={
+                      row.original.featured
+                        ? "size-4 fill-current"
+                        : "size-4"
+                    }
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {row.original.featured ? "取消精選" : "設為精選"}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
                   onClick={() => openEdit(row.original)}
                   aria-label="編輯日常"
                 >
@@ -896,7 +1037,7 @@ export default function CanisWorldPage() {
         ),
       },
     ],
-    [filteredEntries, mutating],
+    [entries, filteredEntries, mutating],
   );
 
   const traitsText =
@@ -937,7 +1078,7 @@ export default function CanisWorldPage() {
         <>
           <Tabs
             value={activeSection}
-            onValueChange={setActiveSection}
+            onValueChange={selectActiveSection}
             className="hidden min-w-0 md:block"
           >
             <div className="flex flex-col gap-4 border-b border-border md:flex-row md:items-end md:justify-between">
@@ -953,7 +1094,7 @@ export default function CanisWorldPage() {
 
           <div className="grid gap-2 md:hidden">
             <Label htmlFor="management-section">管理區塊</Label>
-            <Select value={activeSection} onValueChange={setActiveSection}>
+            <Select value={activeSection} onValueChange={selectActiveSection}>
               <SelectTrigger id="management-section">
                 <SelectValue>{activeSectionLabel}</SelectValue>
               </SelectTrigger>
@@ -1117,7 +1258,7 @@ export default function CanisWorldPage() {
               <CardHeader className="gap-1.5 space-y-0">
                 <CardTitle>頁面文案</CardTitle>
                 <CardDescription>
-                  管理首頁導覽、成人提醒、照片牆與關於區塊。
+                  管理首頁導覽、成人提醒、貼文區與關於區塊。
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6">
@@ -1239,13 +1380,13 @@ export default function CanisWorldPage() {
                 <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
                   <Field
                     id="gallery-badge"
-                    label="照片牆標籤"
+                    label="貼文區標籤"
                     value={settings.content?.galleryBadge}
                     onChange={(value) => updateContent("galleryBadge", value)}
                   />
                   <Field
                     id="gallery-title"
-                    label="照片牆標題"
+                    label="貼文區標題"
                     value={settings.content?.galleryTitle}
                     onChange={(value) => updateContent("galleryTitle", value)}
                   />
@@ -1470,7 +1611,7 @@ export default function CanisWorldPage() {
       )}
 
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="grid max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 max-sm:left-0 max-sm:top-0 max-sm:h-svh max-sm:max-h-svh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0">
+        <DialogContent className="grid h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 max-sm:left-0 max-sm:top-0 max-sm:h-svh max-sm:max-h-svh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0">
           <DialogHeader className="min-w-0 px-4 pt-4 pr-12 text-left sm:px-6 sm:pt-6">
             <DialogTitle>{editingId ? "編輯日常" : "新增日常"}</DialogTitle>
             <DialogDescription className="text-pretty">
@@ -1480,7 +1621,7 @@ export default function CanisWorldPage() {
           <form
             ref={editorFormRef}
             onSubmit={applyDraft}
-            className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
+            className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
           >
             <div className="grid min-h-0 min-w-0 gap-5 overflow-y-auto px-4 py-5 sm:px-6">
               <div className="grid gap-4 lg:grid-cols-2">
@@ -1595,7 +1736,9 @@ export default function CanisWorldPage() {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                disabled={index === 0 || mutating}
+                                disabled={
+                                  index === 0 || mutating || uploadingImages
+                                }
                                 onClick={() => moveImage(index, -1)}
                                 aria-label="照片往前移"
                               >
@@ -1611,7 +1754,9 @@ export default function CanisWorldPage() {
                                 variant="ghost"
                                 size="icon"
                                 disabled={
-                                  index === draft.images.length - 1 || mutating
+                                  index === draft.images.length - 1 ||
+                                  mutating ||
+                                  uploadingImages
                                 }
                                 onClick={() => moveImage(index, 1)}
                                 aria-label="照片往後移"
@@ -1628,7 +1773,7 @@ export default function CanisWorldPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="text-destructive hover:text-destructive"
-                                disabled={mutating}
+                                disabled={mutating || uploadingImages}
                                 onClick={() => setRemoveImageIndex(index)}
                                 aria-label="移除照片"
                               >
@@ -1660,32 +1805,43 @@ export default function CanisWorldPage() {
 
                 <div className="grid min-w-0 gap-2 sm:flex sm:items-center sm:gap-3">
                   <Button
+                    type="button"
                     variant="outline"
-                    nativeButton={false}
-                    render={
-                      <Label
-                        htmlFor="media-upload"
-                        className="w-full cursor-pointer sm:w-fit"
-                      />
-                    }
-                    disabled={mutating}
+                    disabled={mutating || uploadingImages}
+                    className="w-full sm:w-fit"
+                    onClick={() => mediaUploadInputRef.current?.click()}
                   >
-                    <ImagePlus className="size-4" />
-                    {draft.images?.length ? "新增照片" : "選擇照片"}
+                    {uploadingImages ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    ) : (
+                      <ImagePlus className="size-4" />
+                    )}
+                    {uploadingImages
+                      ? "上傳中"
+                      : draft.images?.length
+                        ? "新增照片"
+                        : "選擇照片"}
                   </Button>
                   <span className="min-w-0 text-xs leading-5 text-muted-foreground">
                     可一次選取多張，上方順序會同步到前台。
                   </span>
                   <Input
+                    ref={mediaUploadInputRef}
                     id="media-upload"
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     multiple
                     className="sr-only"
-                    disabled={mutating}
+                    disabled={mutating || uploadingImages}
                     onChange={uploadImages}
                   />
                 </div>
+                {uploadingImages ? (
+                  <Progress value={uploadProgress}>
+                    <ProgressLabel>圖片上傳進度</ProgressLabel>
+                    <ProgressValue>{() => `${uploadProgress}%`}</ProgressValue>
+                  </Progress>
+                ) : null}
               </div>
               <div className="grid gap-3">
                 <FieldLabel className="cursor-pointer rounded-lg border bg-muted/10 p-4 transition-colors hover:bg-muted/30">
@@ -1699,7 +1855,7 @@ export default function CanisWorldPage() {
                     <FieldContent>
                       <span className="text-sm font-medium">設為精選</span>
                       <FieldDescription>
-                        會出現在首頁的日常紀錄區塊；未勾選仍可保留在完整相簿與資料表。
+                        會出現在首頁的精選日常區塊；未勾選仍會保留在所有貼文與資料表。
                       </FieldDescription>
                     </FieldContent>
                   </CheckboxField>
@@ -1722,16 +1878,22 @@ export default function CanisWorldPage() {
                 </FieldLabel>
               </div>
             </div>
-            <DialogFooter className="border-t px-4 py-4 sm:px-6">
+            <DialogFooter className="m-0 rounded-none border-t px-4 py-4 sm:px-6">
               <DialogClose asChild>
-                <Button type="button" variant="outline" disabled={mutating}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={mutating || uploadingImages}
+                >
                   取消
                 </Button>
               </DialogClose>
               <Button
                 type="submit"
                 variant="secondary"
-                disabled={mutating || draft.published !== false}
+                disabled={
+                  mutating || uploadingImages || draft.published !== false
+                }
                 formNoValidate
                 onClick={() => {
                   entrySaveIntentRef.current = "draft";
@@ -1742,7 +1904,7 @@ export default function CanisWorldPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={mutating}
+                disabled={mutating || uploadingImages}
                 onClick={() => {
                   entrySaveIntentRef.current = "save";
                 }}
@@ -1775,6 +1937,20 @@ export default function CanisWorldPage() {
         confirmText="刪除"
         onConfirm={confirmDelete}
       />
+
+      <AlertDialog open={featuredLimitOpen} onOpenChange={setFeaturedLimitOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>精選數量已達上限</AlertDialogTitle>
+            <AlertDialogDescription>
+              首頁最多顯示 {MAX_FEATURED_ENTRIES} 筆精選日常。請先取消一筆精選，再設定新的精選項目。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>了解</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardShell>
   );
 }

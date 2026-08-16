@@ -108,7 +108,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSaved }) {
               </div>
             </div>
           </div>
-          <DialogFooter className="shrink-0 border-t px-6 py-4">
+          <DialogFooter className="m-0 shrink-0 rounded-none border-t px-6 py-4">
             <DialogClose asChild>
               <Button type="button" variant="outline">取消</Button>
             </DialogClose>

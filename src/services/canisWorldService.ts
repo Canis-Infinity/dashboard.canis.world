@@ -51,9 +51,13 @@ export async function deleteCanisWorldCollectionItem(collection, id) {
   return response.data;
 }
 
-export async function uploadCanisWorldMedia(files) {
+export async function uploadCanisWorldMedia(files, config = {}) {
   const formData = new FormData();
   Array.from(files).forEach((file) => formData.append("media", file));
-  const response = await apiClient.post("/api/canis-world/media", formData);
+  const response = await apiClient.post(
+    "/api/canis-world/media",
+    formData,
+    config,
+  );
   return response.data;
 }

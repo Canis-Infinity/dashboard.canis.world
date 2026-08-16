@@ -9,21 +9,28 @@ export function useAsyncResource(fetcher, dependencies = [], options = {}) {
   const [state, setState] = useState({
     data: initialData,
     loading: enabled,
+    refreshing: false,
     error: '',
   });
 
   const refetch = useCallback(async () => {
     if (!enabled) return null;
-    setState((current) => ({ ...current, loading: true, error: '' }));
+    setState((current) => ({
+      ...current,
+      loading: current.data == null,
+      refreshing: current.data != null,
+      error: '',
+    }));
 
     try {
       const data = await fetcher();
-      setState({ data, loading: false, error: '' });
+      setState({ data, loading: false, refreshing: false, error: '' });
       return data;
     } catch (error) {
       setState((current) => ({
         ...current,
         loading: false,
+        refreshing: false,
         error: getErrorMessage(error, fallbackError),
       }));
       return null;
@@ -35,16 +42,24 @@ export function useAsyncResource(fetcher, dependencies = [], options = {}) {
 
     async function load() {
       if (!enabled) return;
-      setState((current) => ({ ...current, loading: true, error: '' }));
+      setState((current) => ({
+        ...current,
+        loading: current.data == null,
+        refreshing: current.data != null,
+        error: '',
+      }));
 
       try {
         const data = await fetcher();
-        if (active) setState({ data, loading: false, error: '' });
+        if (active) {
+          setState({ data, loading: false, refreshing: false, error: '' });
+        }
       } catch (error) {
         if (active) {
           setState((current) => ({
             ...current,
             loading: false,
+            refreshing: false,
             error: getErrorMessage(error, fallbackError),
           }));
         }
