@@ -8,7 +8,6 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
-import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandPalette } from '@/components/layout/CommandPalette';
@@ -34,7 +33,6 @@ export function SiteHeader({ title, action, commandActions }) {
         </TooltipTrigger>
         <TooltipContent>開啟導覽列</TooltipContent>
       </Tooltip>
-      <Separator orientation="vertical" className="mr-2 h-4" />
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
