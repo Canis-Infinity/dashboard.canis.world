@@ -35,3 +35,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Hand-written service worker and fallback are source files.
+!/public/sw.js
+!/public/offline.html
+/test-results/
+/playwright-report/

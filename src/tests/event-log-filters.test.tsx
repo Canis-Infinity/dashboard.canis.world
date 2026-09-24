@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const { useEventLogs } = vi.hoisted(() => ({
-  useEventLogs: vi.fn(() => ({
+  useEventLogs: vi.fn((..._args: unknown[]) => ({
     data: [],
     total: 1,
     amount: 0,

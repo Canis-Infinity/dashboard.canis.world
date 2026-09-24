@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-function DataTableColumnHeader({ column, title, className }) {
+function DataTableColumnHeader({ column, title, className = undefined }) {
   const sorted = column.getIsSorted()
   const Icon = sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ChevronsUpDown
 
@@ -57,7 +57,7 @@ function DataTableColumnHeader({ column, title, className }) {
   )
 }
 
-function createDataTableSelectionColumn({ label = "資料列", getRowLabel } = {}) {
+function createDataTableSelectionColumn({ label = "資料列", getRowLabel = undefined } = {}) {
   return {
     id: "select",
     enableSorting: false,
@@ -97,23 +97,23 @@ function createDataTableSelectionColumn({ label = "資料列", getRowLabel } = {
 function DataTable({
   columns,
   data,
-  loading,
+  loading = undefined,
   emptyText = "暫無資料",
   emptyDescription = "目前沒有可顯示的資料。",
   pageSize = 10,
   showPagination = true,
-  pageIndex,
-  pageCount,
-  totalRows,
-  paginationSummary,
-  onPageChange,
+  pageIndex = undefined,
+  pageCount = undefined,
+  totalRows = undefined,
+  paginationSummary = undefined,
+  onPageChange = undefined,
   initialSorting = [],
   enableSorting = true,
-  rowSelection,
-  onRowSelectionChange,
-  getRowId,
-  selectionToolbar,
-  className,
+  rowSelection = undefined,
+  onRowSelectionChange = undefined,
+  getRowId = undefined,
+  selectionToolbar = undefined,
+  className = undefined,
 }) {
   const [sorting, setSorting] = React.useState(initialSorting)
   const [pagination, setPagination] = React.useState({
