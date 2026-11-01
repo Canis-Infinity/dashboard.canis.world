@@ -1,5 +1,6 @@
 // @ts-nocheck
 "use client";
+import { formatDisplayDate } from '@/utils/date';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -929,7 +930,7 @@ export default function CanisWorldPage() {
           <DataTableColumnHeader column={column} title="日期" />
         ),
         cell: ({ row }) =>
-          new Date(row.original.occurredAt).toLocaleDateString("zh-TW"),
+          formatDisplayDate(row.original.occurredAt),
       },
       {
         accessorKey: "category",

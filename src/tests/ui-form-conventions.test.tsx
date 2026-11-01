@@ -34,7 +34,7 @@ describe("shared form conventions", () => {
     )
   })
 
-  it("formats date ranges in Traditional Chinese", () => {
+  it("formats date ranges as YYYY-MM-DD", () => {
     render(
       <DateRangePicker
         value={{ from: new Date(2026, 7, 1), to: new Date(2026, 7, 31) }}
@@ -44,10 +44,10 @@ describe("shared form conventions", () => {
     )
 
     expect(screen.getByRole("button", { name: "日期區間" })).toBeTruthy()
-    expect(screen.getByText("2026年8月1日 - 2026年8月31日")).toBeTruthy()
+    expect(screen.getByText("2026-08-01 - 2026-08-31")).toBeTruthy()
   })
 
-  it("formats a single date in Traditional Chinese", () => {
+  it("formats a single date as YYYY-MM-DD", () => {
     render(
       <DatePicker
         id="occurred-at"
@@ -58,6 +58,6 @@ describe("shared form conventions", () => {
     )
 
     expect(screen.getByRole("button", { name: "日期" })).toBeTruthy()
-    expect(screen.getByText("2026年8月5日")).toBeTruthy()
+    expect(screen.getByText("2026-08-05")).toBeTruthy()
   })
 })

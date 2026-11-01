@@ -1,5 +1,6 @@
 // @ts-nocheck
 'use client';
+import { formatDisplayDate } from '@/utils/date';
 
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
@@ -23,14 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 function formatDate(value) {
-  if (!value) return '-';
-  return new Intl.DateTimeFormat('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
+  return formatDisplayDate(value, 'yyyy-MM-dd HH:mm');
 }
 
 function getActor(log) {

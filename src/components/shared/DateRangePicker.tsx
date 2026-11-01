@@ -23,7 +23,7 @@ function formatDate(value) {
 }
 
 function formatDisplayDate(value) {
-  return format(value, 'PPP', { locale: zhTW });
+  return format(value, 'yyyy-MM-dd', { locale: zhTW });
 }
 
 export function DateRangePicker({

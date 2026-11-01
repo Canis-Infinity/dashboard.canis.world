@@ -60,7 +60,7 @@ export function DatePicker({
           }
         >
           <CalendarIcon data-icon="inline-start" />
-          {date ? format(date, "PPP", { locale: zhTW }) : placeholder}
+          {date ? format(date, "yyyy-MM-dd", { locale: zhTW }) : placeholder}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <TypedCalendar

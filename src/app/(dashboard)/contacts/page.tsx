@@ -1,5 +1,6 @@
 // @ts-nocheck
 'use client';
+import { formatDisplayDate } from '@/utils/date';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Info, Mail, MailOpen, Trash2, X } from 'lucide-react';
@@ -38,16 +39,7 @@ const statusBadgeClassNames = {
 };
 
 function formatDate(value) {
-  if (!value) return '-';
-  return new Intl.DateTimeFormat('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).format(new Date(value));
+  return formatDisplayDate(value, 'yyyy-MM-dd HH:mm:ss');
 }
 
 function createContactPayload(contact, status) {
