@@ -2,6 +2,20 @@
 
 Canis Den 專用後台，沿用 `iistw.com/admin` 的 Next.js standalone、Radix/shadcn UI、Tailwind、Vitest 技術棧。
 
+## 網站管理導覽
+
+Canis World 使用 Sidebar 的「網站管理」二階選單，各項目有獨立路由與表單：
+
+- `/canis-world/status`：今日狀態
+- `/canis-world/profile`：角色介紹
+- `/canis-world/entries`：日常紀錄
+- `/canis-world/content`：頁面文案
+- `/canis-world/faqs`：常見問題
+- `/canis-world/features`：資訊卡片
+- `/canis-world/footer`：頁尾版權
+
+設定表單只儲存當頁區塊；頁面搜尋可直接前往各子頁。舊 `/canis-world?tab=...` 入口已移除。
+
 ## Port
 
 - Dashboard: `7343`

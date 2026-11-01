@@ -1,6 +1,6 @@
 // @ts-nocheck
 "use client";
-import { formatDisplayDate } from '@/utils/date';
+import { formatDisplayDate } from "@/utils/date";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -22,7 +22,6 @@ import {
   X,
 } from "lucide-react";
 import DashboardShell from "@/components/layout/DashboardShell";
-import { ContentCollections } from "@/components/features/canis-world/ContentCollections";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { DatePicker } from "@/components/shared/DatePicker";
 import { DateRangePicker } from "@/components/shared/DateRangePicker";
@@ -90,8 +89,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import {
@@ -105,7 +102,6 @@ import {
   deleteCanisWorldEntry,
   getCanisWorldAdmin,
   updateCanisWorldEntry,
-  updateCanisWorldSettings,
   uploadCanisWorldMedia,
 } from "@/services/canisWorldService";
 import { apiAssetUrl } from "@/libs/url";
@@ -133,16 +129,6 @@ function currentDateValue() {
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
-
-const managementSections = [
-  { value: "status", label: "今日狀態" },
-  { value: "profile", label: "角色介紹" },
-  { value: "footer", label: "頁尾版權" },
-  { value: "content", label: "頁面文案" },
-  { value: "faqs", label: "常見問題" },
-  { value: "features", label: "資訊卡片" },
-  { value: "entries", label: "日常紀錄" },
-];
 
 const baseCategoryOptions = [
   "日常",
@@ -465,58 +451,20 @@ function SuggestionCombobox({
 
 function CanisWorldSkeleton() {
   return (
-    <div className="grid gap-6">
-      {[0, 1, 2, 3].map((section) => (
-        <Card key={section}>
-          <CardHeader className="gap-1.5 space-y-0">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-full max-w-md" />
-          </CardHeader>
-          <CardContent className="grid gap-5 md:grid-cols-2">
-            {Array.from({ length: section === 0 ? 5 : 4 }).map((_, index) => (
-              <div
-                key={index}
-                className={
-                  index === 4 ? "grid gap-2 md:col-span-2" : "grid gap-2"
-                }
-              >
-                <Skeleton className="h-4 w-20" />
-                <Skeleton
-                  className={index === 4 ? "h-24 w-full" : "h-10 w-full"}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-      <div className="flex justify-end">
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <Card className="overflow-hidden">
-        <CardHeader className="gap-1.5 space-y-0">
-          <Skeleton className="h-6 w-28" />
-          <Skeleton className="h-4 w-72 max-w-full" />
-        </CardHeader>
-        <CardContent className="grid gap-3 border-t p-4">
-          <Skeleton className="h-10 w-full" />
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-14 w-full" />
-          ))}
-        </CardContent>
-      </Card>
+    <div className="grid gap-4" aria-label="日常紀錄載入中">
+      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-80 w-full" />
     </div>
   );
 }
 
-export default function CanisWorldPage() {
+export default function EntriesPage() {
   const fetchData = useCallback(() => getCanisWorldAdmin(), []);
   const { data, loading, error, refetch } = useAsyncResource(fetchData, [], {
     initialData: null,
     fallbackError: "無法取得 Canis World 資料",
   });
-  const [settings, setSettings] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [savingSettings, setSavingSettings] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState(normalizeEntry());
   const [editingId, setEditingId] = useState("");
@@ -526,59 +474,15 @@ export default function CanisWorldPage() {
   const [mutating, setMutating] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [activeSection, setActiveSection] = useState("status");
   const [entryDraftFilters, setEntryDraftFilters] = useState(emptyEntryFilters);
   const [entryAppliedFilters, setEntryAppliedFilters] =
     useState(emptyEntryFilters);
-  const settingsFormRef = useRef(null);
   const editorFormRef = useRef(null);
   const mediaUploadInputRef = useRef(null);
   const entrySaveIntentRef = useRef("save");
 
   useEffect(() => {
-    function syncSectionFromQuery() {
-      const url = new URL(window.location.href);
-      const requestedSection = url.searchParams.get("tab");
-      const nextSection = managementSections.some(
-        (section) => section.value === requestedSection,
-      )
-        ? requestedSection
-        : "status";
-
-      setActiveSection(nextSection);
-      if (requestedSection !== nextSection) {
-        url.searchParams.set("tab", nextSection);
-        window.history.replaceState(window.history.state, "", url);
-      }
-    }
-
-    syncSectionFromQuery();
-    window.addEventListener("popstate", syncSectionFromQuery);
-    return () => window.removeEventListener("popstate", syncSectionFromQuery);
-  }, []);
-
-  function selectActiveSection(nextSection) {
-    if (
-      !managementSections.some((section) => section.value === nextSection)
-    ) {
-      return;
-    }
-
-    setActiveSection(nextSection);
-    const url = new URL(window.location.href);
-    if (url.searchParams.get("tab") === nextSection) return;
-    url.searchParams.set("tab", nextSection);
-    window.history.pushState(window.history.state, "", url);
-  }
-
-  useEffect(() => {
     if (!data) return;
-    setSettings({
-      status: data.status || {},
-      profile: data.profile || {},
-      content: data.content || {},
-      footer: data.footer || {},
-    });
     setEntries(data.entries || []);
   }, [data]);
 
@@ -587,69 +491,15 @@ export default function CanisWorldPage() {
       if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
         return;
       event.preventDefault();
-      if (savingSettings || mutating || uploadingImages) return;
+      if (mutating || uploadingImages) return;
 
-      const form = editorOpen ? editorFormRef.current : settingsFormRef.current;
+      const form = editorOpen ? editorFormRef.current : null;
       form?.requestSubmit();
     }
 
     window.addEventListener("keydown", handleSaveShortcut);
     return () => window.removeEventListener("keydown", handleSaveShortcut);
-  }, [editorOpen, mutating, savingSettings, uploadingImages]);
-
-  function updateStatus(key, value) {
-    setSettings((current) => ({
-      ...current,
-      status: { ...current.status, [key]: value },
-    }));
-  }
-
-  function updateProfile(key, value) {
-    setSettings((current) => ({
-      ...current,
-      profile: { ...current.profile, [key]: value },
-    }));
-  }
-
-  function updateFooter(key, value) {
-    setSettings((current) => ({
-      ...current,
-      footer: { ...current.footer, [key]: value },
-    }));
-  }
-
-  function updateContent(key, value) {
-    setSettings((current) => ({
-      ...current,
-      content: { ...current.content, [key]: value },
-    }));
-  }
-
-  async function saveSettings(event) {
-    event.preventDefault();
-    setSavingSettings(true);
-    try {
-      const payload = {
-        status: settings.status,
-        profile: {
-          ...settings.profile,
-          traits: splitList(
-            settings.profile?.traitsText ??
-              settings.profile?.traits?.join(", "),
-          ),
-        },
-        content: settings.content,
-        footer: settings.footer,
-      };
-      const result = await updateCanisWorldSettings(payload);
-      toast.success(result.message || "Canis World 設定已更新");
-      await refetch();
-    } catch (saveError) {
-      toast.error(getErrorMessage(saveError, "設定儲存失敗"));
-    } finally {
-      setSavingSettings(false);
-    }
-  }
+  }, [editorOpen, mutating, uploadingImages]);
 
   function openCreate() {
     const nextPriority = entries.length
@@ -874,10 +724,16 @@ export default function CanisWorldPage() {
         ),
         cell: ({ row }) => (
           <div className="w-[30em]">
-            <div className="truncate font-medium" title={row.original.title || "未命名草稿"}>
+            <div
+              className="truncate font-medium"
+              title={row.original.title || "未命名草稿"}
+            >
               {row.original.title || "未命名草稿"}
             </div>
-            <div className="truncate text-xs text-muted-foreground" title={row.original.excerpt || "尚未填寫摘要"}>
+            <div
+              className="truncate text-xs text-muted-foreground"
+              title={row.original.excerpt || "尚未填寫摘要"}
+            >
               {row.original.excerpt || "尚未填寫摘要"}
             </div>
           </div>
@@ -888,8 +744,7 @@ export default function CanisWorldPage() {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="日期" />
         ),
-        cell: ({ row }) =>
-          formatDisplayDate(row.original.occurredAt),
+        cell: ({ row }) => formatDisplayDate(row.original.occurredAt),
       },
       {
         accessorKey: "category",
@@ -945,17 +800,13 @@ export default function CanisWorldPage() {
                       : undefined
                   }
                   disabled={mutating}
-                  aria-label={
-                    row.original.featured ? "取消精選" : "設為精選"
-                  }
+                  aria-label={row.original.featured ? "取消精選" : "設為精選"}
                   aria-pressed={row.original.featured === true}
                   onClick={() => toggleFeatured(row.original)}
                 >
                   <Star
                     className={
-                      row.original.featured
-                        ? "size-4 fill-current"
-                        : "size-4"
+                      row.original.featured ? "size-4 fill-current" : "size-4"
                     }
                   />
                 </Button>
@@ -1000,9 +851,6 @@ export default function CanisWorldPage() {
     [entries, filteredEntries, mutating],
   );
 
-  const traitsText =
-    settings?.profile?.traitsText ??
-    (settings?.profile?.traits || []).join(", ");
   const categoryOptions = useMemo(
     () => uniqueOptions(baseCategoryOptions, entries, "category", ["daily"]),
     [entries],
@@ -1011,14 +859,10 @@ export default function CanisWorldPage() {
     () => uniqueOptions(baseMoodOptions, entries, "mood"),
     [entries],
   );
-  const activeSectionLabel =
-    managementSections.find((section) => section.value === activeSection)
-      ?.label || "請選擇管理區塊";
-
   return (
     <DashboardShell
-      title="Canis World"
-      description="管理 canis.world 的人型犬日常、今日狀態、照片與公開紀錄。"
+      title="日常紀錄"
+      description="管理日常文字、照片、精選與公開狀態。"
       action={
         <Button type="button" onClick={openCreate}>
           <Plus className="size-4" />
@@ -1032,310 +876,11 @@ export default function CanisWorldPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      {loading || !settings ? (
+      {loading || !data ? (
         <CanisWorldSkeleton />
       ) : (
         <>
-          <Tabs
-            value={activeSection}
-            onValueChange={selectActiveSection}
-            className="hidden min-w-0 md:block"
-          >
-            <div className="flex flex-col gap-4 border-b border-border md:flex-row md:items-end md:justify-between">
-              <TabsList variant="line">
-                {managementSections.map((section) => (
-                  <TabsTrigger key={section.value} value={section.value}>
-                    {section.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </Tabs>
-
-          <div className="grid gap-2 md:hidden">
-            <Label htmlFor="management-section">管理區塊</Label>
-            <Select value={activeSection} onValueChange={selectActiveSection}>
-              <SelectTrigger id="management-section">
-                <SelectValue>{activeSectionLabel}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {managementSections.map((section) => (
-                  <SelectItem key={section.value} value={section.value}>
-                    {section.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <form
-            ref={settingsFormRef}
-            onSubmit={saveSettings}
-            className="grid gap-6"
-          >
-            <Card className={activeSection !== "status" ? "hidden" : ""}>
-              <CardHeader className="gap-1.5 space-y-0">
-                <CardTitle>今日狀態</CardTitle>
-                <CardDescription>
-                  首頁第一眼會看到的 Canis 狀態面板。
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <Field
-                  id="status-label"
-                  label="狀態"
-                  value={settings.status?.label}
-                  onChange={(value) => updateStatus("label", value)}
-                />
-                <Field
-                  id="status-mood"
-                  label="心情"
-                  value={settings.status?.mood}
-                  onChange={(value) => updateStatus("mood", value)}
-                />
-                <Field
-                  id="status-doing"
-                  label="正在做"
-                  value={settings.status?.doing}
-                  onChange={(value) => updateStatus("doing", value)}
-                />
-                <Field
-                  id="status-location"
-                  label="出沒地點"
-                  value={settings.status?.location}
-                  onChange={(value) => updateStatus("location", value)}
-                />
-                <div className="grid gap-2">
-                  <Label htmlFor="status-note">一句話</Label>
-                  <Textarea
-                    id="status-note"
-                    placeholder="請輸入今日狀態補充"
-                    value={settings.status?.note || ""}
-                    onChange={(event) =>
-                      updateStatus("note", event.target.value)
-                    }
-                    className="min-h-20"
-                  />
-                </div>
-                <div className="grid content-start gap-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <Label htmlFor="status-completeness">今日狀態完整度</Label>
-                    <span className="text-sm tabular-nums text-muted-foreground">
-                      {Number(settings.status?.completeness) || 0}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="status-completeness"
-                    value={Number(settings.status?.completeness) || 0}
-                    min={-100}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) =>
-                      updateStatus("completeness", value)
-                    }
-                    aria-label="今日狀態完整度"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={activeSection !== "profile" ? "hidden" : ""}>
-              <CardHeader className="gap-1.5 space-y-0">
-                <CardTitle>角色介紹</CardTitle>
-                <CardDescription>
-                  Canis World 的公開簡介，不取代 iistw.com 的正式身分。
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <Field
-                  id="display-name"
-                  label="顯示名稱"
-                  value={settings.profile?.displayName}
-                  onChange={(value) => updateProfile("displayName", value)}
-                />
-                <Field
-                  id="subtitle"
-                  label="副標題"
-                  value={settings.profile?.subtitle}
-                  onChange={(value) => updateProfile("subtitle", value)}
-                />
-                <div className="grid gap-2 md:col-span-2">
-                  <Label htmlFor="intro">介紹</Label>
-                  <Textarea
-                    id="intro"
-                    placeholder="請輸入角色介紹"
-                    value={settings.profile?.intro || ""}
-                    onChange={(event) =>
-                      updateProfile("intro", event.target.value)
-                    }
-                    className="min-h-24"
-                  />
-                </div>
-                <Field
-                  id="traits"
-                  label="特徵標籤，逗號分隔"
-                  placeholder="例如：人型犬, 日常紀錄, 基地生活"
-                  value={traitsText}
-                  onChange={(value) => updateProfile("traitsText", value)}
-                />
-              </CardContent>
-            </Card>
-
-            <Card className={activeSection !== "footer" ? "hidden" : ""}>
-              <CardHeader className="gap-1.5 space-y-0">
-                <CardTitle>頁尾版權</CardTitle>
-                <CardDescription>
-                  設定 canis.world 頁尾顯示的擁有者、連結與權利文字。
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <Field
-                  id="footer-owner"
-                  label="擁有者名稱"
-                  value={settings.footer?.owner}
-                  onChange={(value) => updateFooter("owner", value)}
-                />
-                <Field
-                  id="footer-owner-url"
-                  label="擁有者連結"
-                  type="url"
-                  placeholder="例如：http://example.com"
-                  value={settings.footer?.ownerUrl}
-                  onChange={(value) => updateFooter("ownerUrl", value)}
-                />
-                <div className="md:col-span-2">
-                  <Field
-                    id="footer-rights"
-                    label="權利文字"
-                    value={settings.footer?.rightsText}
-                    onChange={(value) => updateFooter("rightsText", value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={activeSection !== "content" ? "hidden" : ""}>
-              <CardHeader className="gap-1.5 space-y-0">
-                <CardTitle>頁面文案</CardTitle>
-                <CardDescription>
-                  管理首頁導覽、成人提醒、貼文區與關於區塊。
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field
-                    id="header-link-label"
-                    label="右上按鈕文字"
-                    value={settings.content?.headerLinkLabel}
-                    onChange={(value) =>
-                      updateContent("headerLinkLabel", value)
-                    }
-                  />
-                  <Field
-                    id="header-link-url"
-                    label="右上按鈕連結"
-                    type="url"
-                    placeholder="例如：http://example.com"
-                    value={settings.content?.headerLinkUrl}
-                    onChange={(value) => updateContent("headerLinkUrl", value)}
-                  />
-                  <div className="grid gap-2 rounded-lg border bg-muted/20 p-4 md:col-span-2">
-                    <Label>首頁主視覺</Label>
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      每次載入首頁時，會從公開的精選日常隨機選一篇，使用該篇的首張照片、分類、日期、標題與摘要。請到日常紀錄管理精選項目；沒有精選時會顯示一般公開日常。
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
-                  <Field
-                    id="adult-title"
-                    label="成人提醒標題"
-                    value={settings.content?.adultTitle}
-                    onChange={(value) => updateContent("adultTitle", value)}
-                  />
-                  <div className="grid gap-2 md:col-span-2">
-                    <Label htmlFor="adult-description">成人提醒內容</Label>
-                    <Textarea
-                      id="adult-description"
-                      placeholder="請輸入成人提醒內容"
-                      value={settings.content?.adultDescription || ""}
-                      onChange={(event) =>
-                        updateContent("adultDescription", event.target.value)
-                      }
-                      className="min-h-20"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
-                  <Field
-                    id="gallery-badge"
-                    label="貼文區標籤"
-                    value={settings.content?.galleryBadge}
-                    onChange={(value) => updateContent("galleryBadge", value)}
-                  />
-                  <Field
-                    id="gallery-title"
-                    label="貼文區標題"
-                    value={settings.content?.galleryTitle}
-                    onChange={(value) => updateContent("galleryTitle", value)}
-                  />
-                  <Field
-                    id="about-badge"
-                    label="關於區標籤"
-                    value={settings.content?.aboutBadge}
-                    onChange={(value) => updateContent("aboutBadge", value)}
-                  />
-                  <Field
-                    id="about-title"
-                    label="關於區標題"
-                    value={settings.content?.aboutTitle}
-                    onChange={(value) => updateContent("aboutTitle", value)}
-                  />
-                  <div className="grid gap-2 md:col-span-2">
-                    <Label htmlFor="about-description">關於區介紹</Label>
-                    <Textarea
-                      id="about-description"
-                      placeholder="請輸入關於區介紹"
-                      value={settings.content?.aboutDescription || ""}
-                      onChange={(event) =>
-                        updateContent("aboutDescription", event.target.value)
-                      }
-                      className="min-h-24"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div
-              className={`flex justify-end ${
-                ["status", "profile", "footer", "content"].includes(
-                  activeSection,
-                )
-                  ? ""
-                  : "hidden"
-              }`}
-            >
-              <Button type="submit" disabled={savingSettings}>
-                <Save className="size-4" />
-                {savingSettings ? "儲存中..." : "儲存設定"}
-              </Button>
-            </div>
-          </form>
-
-          <ContentCollections
-            faqs={data.faqs || []}
-            featureCards={data.featureCards || []}
-            onChanged={refetch}
-            activeSection={activeSection}
-          />
-
-          <div
-            className={`grid gap-6 ${
-              activeSection !== "entries" ? "hidden" : ""
-            }`}
-          >
+          <div className="grid gap-6">
             <Card aria-label="日常紀錄篩選">
               <CardContent className="p-4 sm:p-6">
                 <form className="grid gap-5" onSubmit={applyEntryFilters}>
@@ -1745,7 +1290,8 @@ export default function CanisWorldPage() {
                     <FieldContent>
                       <span className="text-sm font-medium">設為精選</span>
                       <FieldDescription>
-                        最多可設定 {MAX_FEATURED_ENTRIES} 篇，會出現在首頁的精選日常區塊；未勾選仍會保留在所有貼文與資料表。
+                        最多可設定 {MAX_FEATURED_ENTRIES}{" "}
+                        篇，會出現在首頁的精選日常區塊；未勾選仍會保留在所有貼文與資料表。
                       </FieldDescription>
                     </FieldContent>
                   </CheckboxField>
@@ -1833,7 +1379,8 @@ export default function CanisWorldPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>精選數量已達上限</AlertDialogTitle>
             <AlertDialogDescription>
-              首頁最多顯示 {MAX_FEATURED_ENTRIES} 筆精選日常。請先取消一筆精選，再設定新的精選項目。
+              首頁最多顯示 {MAX_FEATURED_ENTRIES}{" "}
+              筆精選日常。請先取消一筆精選，再設定新的精選項目。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

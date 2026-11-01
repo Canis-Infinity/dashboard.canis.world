@@ -1,12 +1,17 @@
 // @ts-nocheck
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
-import { toast } from '@/components/ui/toast';
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronDown, LogOut } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
+import { toast } from "@/components/ui/toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +21,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { NAVIGATION_GROUPS } from '@/config/navigation';
-import { logout } from '@/services/authService';
+} from "@/components/ui/alert-dialog";
+import { NAVIGATION_GROUPS } from "@/config/navigation";
+import { logout } from "@/services/authService";
 import {
   Sidebar,
   SidebarContent,
@@ -30,11 +35,69 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 const MOBILE_LOGOUT_DIALOG_DELAY_MS = 350;
+
+function NestedNavigation({ item, pathname }) {
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
+  const active = item.children.some((child) => child.href === pathname);
+  const [expanded, setExpanded] = useState(active);
+  const Icon = item.icon;
+  return (
+    <SidebarMenuItem>
+      <Collapsible
+        open={expanded}
+        onOpenChange={(next) => {
+          if (state === "collapsed" && !isMobile) {
+            setOpen(true);
+            setExpanded(true);
+          } else setExpanded(next);
+        }}
+      >
+        <CollapsibleTrigger
+          render={
+            <SidebarMenuButton
+              className="h-10 text-[15px] font-medium"
+              isActive={active}
+              tooltip={item.title}
+            />
+          }
+        >
+          <Icon className="size-4" />
+          <span>{item.title}</span>
+          <ChevronDown
+            className={`ml-auto size-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.children.map((child) => (
+              <SidebarMenuSubItem key={child.href}>
+                <SidebarMenuSubButton
+                  className="h-9"
+                  isActive={pathname === child.href}
+                  aria-current={pathname === child.href ? "page" : undefined}
+                  render={<Link href={child.href} />}
+                  onClick={() => {
+                    if (isMobile) setOpenMobile(false);
+                  }}
+                >
+                  <span>{child.title}</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar(props) {
   const pathname = usePathname();
@@ -74,12 +137,12 @@ export function AppSidebar(props) {
   async function handleLogout() {
     try {
       const result = await logout();
-      toast.success(result.message || '登出成功');
+      toast.success(result.message || "登出成功");
     } catch {
-      toast.error('登出請求失敗，已清除本機登入資訊');
+      toast.error("登出請求失敗，已清除本機登入資訊");
     } finally {
-      localStorage.removeItem('token');
-      router.push('/login');
+      localStorage.removeItem("token");
+      router.push("/login");
     }
   }
 
@@ -87,13 +150,13 @@ export function AppSidebar(props) {
     <>
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="h-10 gap-3 px-2"
-              render={<Link href="/" />}
-            >
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                size="lg"
+                className="h-10 gap-3 px-2"
+                render={<Link href="/" />}
+              >
                 <Image
                   src="/favicon.jpg"
                   alt="Canis Den"
@@ -109,39 +172,56 @@ export function AppSidebar(props) {
                     Dashboard
                   </span>
                 </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarHeader>
         <SidebarContent className="px-2 py-4">
-        {NAVIGATION_GROUPS.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        className="h-10 text-[15px] font-medium"
-                        render={<Link href={item.href} />}
-                        isActive={pathname === item.href}
-                        tooltip={item.title}
-                      >
+          {NAVIGATION_GROUPS.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    if (item.children)
+                      return (
+                        <NestedNavigation
+                          key={item.title}
+                          item={item}
+                          pathname={pathname}
+                        />
+                      );
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          className="h-10 text-[15px] font-medium"
+                          render={<Link href={item.href} />}
+                          isActive={pathname === item.href}
+                          tooltip={item.title}
+                          onClick={() => {
+                            if (isMobile) setOpenMobile(false);
+                          }}
+                        >
                           <Icon className="size-4" />
                           <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
         <SidebarFooter className="p-3 border-t border-sidebar-border">
-          <Button type="button" variant="ghost" className="h-10 w-full justify-start gap-2 text-[15px] font-medium" aria-label="登出" onClick={handleLogoutDialogOpen}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 w-full justify-start gap-2 text-[15px] font-medium"
+            aria-label="登出"
+            onClick={handleLogoutDialogOpen}
+          >
             <LogOut className="size-4" />
             <span className="group-data-[collapsible=icon]:hidden">登出</span>
           </Button>
@@ -151,7 +231,9 @@ export function AppSidebar(props) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確認登出？</AlertDialogTitle>
-            <AlertDialogDescription>登出後會清除目前登入資訊，並返回登入頁。</AlertDialogDescription>
+            <AlertDialogDescription>
+              登出後會清除目前登入資訊，並返回登入頁。
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>

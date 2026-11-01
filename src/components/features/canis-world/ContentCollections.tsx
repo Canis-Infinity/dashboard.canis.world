@@ -647,83 +647,85 @@ export function ContentCollections({
 
   return (
     <>
-      <div className={`grid gap-6 ${activeSection !== "faqs" ? "hidden" : ""}`}>
-        <CollectionFilters
-          idPrefix="faq"
-          keywordLabel="問題"
-          keywordPlaceholder="搜尋問題或回答"
-          draftFilters={faqDraftFilters}
-          onChange={setFaqDraftFilters}
-          onApply={applyFaqFilters}
-          onReset={resetFaqFilters}
-        />
-        <Card className="overflow-hidden">
-          <CardHeader className="gap-4 space-y-0 sm:flex-row sm:items-start sm:justify-between">
-            <div className="grid gap-1.5">
-              <CardTitle>{configs.faq.title}</CardTitle>
-              <CardDescription>{configs.faq.description}</CardDescription>
-            </div>
-            <Button
-              type="button"
-              className="self-start"
-              onClick={() => openCreate("faq", faqs)}
-            >
-              <Plus className="size-4" />
-              新增問題
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            <DataTable
-              columns={faqColumns}
-              data={filteredFaqs}
-              enableSorting={false}
-              pageSize={10}
-              emptyText="尚未建立常見問題"
-              emptyDescription="調整篩選或新增問題後會出現在這裡。"
-            />
-          </CardContent>
-        </Card>
-      </div>
+      {activeSection === "faqs" && (
+        <div className="grid gap-6">
+          <CollectionFilters
+            idPrefix="faq"
+            keywordLabel="問題"
+            keywordPlaceholder="搜尋問題或回答"
+            draftFilters={faqDraftFilters}
+            onChange={setFaqDraftFilters}
+            onApply={applyFaqFilters}
+            onReset={resetFaqFilters}
+          />
+          <Card className="overflow-hidden">
+            <CardHeader className="gap-4 space-y-0 sm:flex-row sm:items-start sm:justify-between">
+              <div className="grid gap-1.5">
+                <CardTitle>{configs.faq.title}</CardTitle>
+                <CardDescription>{configs.faq.description}</CardDescription>
+              </div>
+              <Button
+                type="button"
+                className="self-start"
+                onClick={() => openCreate("faq", faqs)}
+              >
+                <Plus className="size-4" />
+                新增問題
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DataTable
+                columns={faqColumns}
+                data={filteredFaqs}
+                enableSorting={false}
+                pageSize={10}
+                emptyText="尚未建立常見問題"
+                emptyDescription="調整篩選或新增問題後會出現在這裡。"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      <div
-        className={`grid gap-6 ${activeSection !== "features" ? "hidden" : ""}`}
-      >
-        <CollectionFilters
-          idPrefix="feature"
-          keywordLabel="標題"
-          keywordPlaceholder="搜尋標題或說明"
-          draftFilters={featureDraftFilters}
-          onChange={setFeatureDraftFilters}
-          onApply={applyFeatureFilters}
-          onReset={resetFeatureFilters}
-        />
-        <Card className="overflow-hidden">
-          <CardHeader className="gap-4 space-y-0 sm:flex-row sm:items-start sm:justify-between">
-            <div className="grid gap-1.5">
-              <CardTitle>{configs.feature.title}</CardTitle>
-              <CardDescription>{configs.feature.description}</CardDescription>
-            </div>
-            <Button
-              type="button"
-              className="self-start"
-              onClick={() => openCreate("feature", featureCards)}
-            >
-              <Plus className="size-4" />
-              新增卡片
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            <DataTable
-              columns={featureColumns}
-              data={filteredFeatureCards}
-              enableSorting={false}
-              pageSize={10}
-              emptyText="尚未建立資訊卡片"
-              emptyDescription="調整篩選或新增卡片後會出現在這裡。"
-            />
-          </CardContent>
-        </Card>
-      </div>
+      {activeSection === "features" && (
+        <div className="grid gap-6">
+          <CollectionFilters
+            idPrefix="feature"
+            keywordLabel="標題"
+            keywordPlaceholder="搜尋標題或說明"
+            draftFilters={featureDraftFilters}
+            onChange={setFeatureDraftFilters}
+            onApply={applyFeatureFilters}
+            onReset={resetFeatureFilters}
+          />
+          <Card className="overflow-hidden">
+            <CardHeader className="gap-4 space-y-0 sm:flex-row sm:items-start sm:justify-between">
+              <div className="grid gap-1.5">
+                <CardTitle>{configs.feature.title}</CardTitle>
+                <CardDescription>{configs.feature.description}</CardDescription>
+              </div>
+              <Button
+                type="button"
+                className="self-start"
+                onClick={() => openCreate("feature", featureCards)}
+              >
+                <Plus className="size-4" />
+                新增卡片
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DataTable
+                columns={featureColumns}
+                data={filteredFeatureCards}
+                enableSorting={false}
+                pageSize={10}
+                emptyText="尚未建立資訊卡片"
+                emptyDescription="調整篩選或新增卡片後會出現在這裡。"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Dialog
         open={Boolean(editor)}
