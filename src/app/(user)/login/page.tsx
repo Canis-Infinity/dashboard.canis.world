@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
@@ -10,12 +10,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { hasBrowserToken } from '@/middlewares/clientGuards';
 import { login } from '@/services/authService';
 import { getErrorMessage } from '@/utils/apiError';
 
 export default function Login() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    if (hasBrowserToken()) {
+      router.replace('/');
+      return;
+    }
+    setCheckingSession(false);
+  }, [router]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -24,10 +35,14 @@ export default function Login() {
       const result = await login(new FormData(event.currentTarget));
       localStorage.setItem('token', JSON.stringify(result));
       toast.success(result.message || '登入成功');
-      router.push('/');
+      router.replace('/');
     } catch (error) {
       toast.error(getErrorMessage(error, '登入失敗'));
     }
+  }
+
+  if (checkingSession) {
+    return <main className="flex min-h-svh items-center justify-center" role="status">正在確認登入狀態…</main>;
   }
 
   return (

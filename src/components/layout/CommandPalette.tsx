@@ -8,23 +8,15 @@ import { useRouter } from "next/navigation";
 import { useColorTheme } from "@/components/layout/ColorThemeProvider";
 import { Button } from "@/components/ui/button";
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
-  ComboboxSeparator,
-} from "@/components/ui/combobox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { Kbd } from "@/components/ui/kbd";
 import { NAVIGATION_GROUPS, getNavigationLinks } from "@/config/navigation";
 
@@ -131,24 +123,21 @@ export function CommandPalette({ actions = [] }) {
     checked: colorTheme === theme.value,
     run: () => selectColorTheme(theme.value),
   }));
-  const commandEntries = [
-    ...navigationEntries,
-    ...actionEntries,
-    ...themeEntries,
-    ...colorEntries,
-  ];
-
   function renderGroup(label, entries) {
     if (!entries.length) return null;
 
     return (
-      <ComboboxGroup key={label}>
-        <ComboboxLabel>{label}</ComboboxLabel>
+      <CommandGroup key={label} heading={label}>
         {entries.map((entry) => {
           const Icon = entry.icon;
 
           return (
-            <ComboboxItem key={entry.value} value={entry}>
+            <CommandItem
+              key={entry.value}
+              value={entry.value}
+              keywords={[entry.label, entry.group]}
+              onSelect={entry.run}
+            >
               {Icon ? (
                 <Icon />
               ) : (
@@ -157,17 +146,17 @@ export function CommandPalette({ actions = [] }) {
                   style={{ backgroundColor: entry.color }}
                 />
               )}
-              <span>{entry.title}</span>
+              <span className="min-w-0 truncate">{entry.title}</span>
               {entry.shortcut ? (
-                <span className="ml-auto text-xs text-muted-foreground">
+                <span className="ml-auto hidden max-w-[55%] truncate text-xs text-muted-foreground sm:block">
                   {entry.shortcut}
                 </span>
               ) : null}
               {entry.checked ? <Check className="ml-auto" /> : null}
-            </ComboboxItem>
+            </CommandItem>
           );
         })}
-      </ComboboxGroup>
+      </CommandGroup>
     );
   }
 
@@ -184,48 +173,43 @@ export function CommandPalette({ actions = [] }) {
         <Kbd>Ctrl</Kbd>
         <Kbd>K</Kbd>
       </Button>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent
-          className="top-1/3 translate-y-0 overflow-visible rounded-xl p-1"
-          showCloseButton={false}
-        >
-          <DialogHeader className="sr-only">
-            <DialogTitle>命令選單</DialogTitle>
-            <DialogDescription>搜尋頁面或功能</DialogDescription>
-          </DialogHeader>
-          <Combobox
-            items={commandEntries}
-            open={open}
-            onOpenChange={(nextOpen) => {
-              if (!nextOpen) setOpen(false);
-            }}
-            onValueChange={(entry) => entry?.run?.()}
-            itemToStringLabel={(entry) => entry?.label || ""}
-            autoHighlight
-          >
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
-              <ComboboxInput
-                className="pl-8"
-                placeholder="搜尋頁面或功能..."
-                showTrigger={false}
-              />
-            </div>
-            <ComboboxContent className="max-h-80">
-              <ComboboxEmpty className="py-6">找不到符合的項目</ComboboxEmpty>
-              <ComboboxList>
-                {renderGroup("導覽", navigationEntries)}
-                {actionEntries.length ? <ComboboxSeparator /> : null}
-                {renderGroup("操作", actionEntries)}
-                <ComboboxSeparator />
-                {renderGroup("主題", themeEntries)}
-                <ComboboxSeparator />
-                {renderGroup("配色", colorEntries)}
-              </ComboboxList>
-            </ComboboxContent>
-          </Combobox>
-        </DialogContent>
-      </Dialog>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-9 md:hidden"
+        aria-label="搜尋頁面"
+        onClick={() => setOpen(true)}
+      >
+        <Search className="size-4" />
+      </Button>
+      <CommandDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title="命令選單"
+        description="搜尋頁面、操作與主題，使用上下方向鍵選取並按 Enter 執行。"
+      >
+        <Command loop label="搜尋頁面或功能">
+          <CommandInput placeholder="搜尋頁面或功能..." autoFocus />
+          <CommandList>
+            <CommandEmpty>找不到符合的項目</CommandEmpty>
+            {NAVIGATION_GROUPS.map((group) =>
+              renderGroup(
+                group.label,
+                navigationEntries.filter(
+                  (entry) => entry.group === group.label,
+                ),
+              ),
+            )}
+            {actionEntries.length ? <CommandSeparator /> : null}
+            {renderGroup("操作", actionEntries)}
+            <CommandSeparator />
+            {renderGroup("主題", themeEntries)}
+            <CommandSeparator />
+            {renderGroup("配色", colorEntries)}
+          </CommandList>
+        </Command>
+      </CommandDialog>
     </>
   );
 }
