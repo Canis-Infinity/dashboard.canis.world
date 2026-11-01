@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Check,
   FilePenLine,
   ImageIcon,
   ImagePlus,
@@ -789,13 +788,6 @@ export default function CanisWorldPage() {
       ),
     [entries],
   );
-  const publishedEntries = useMemo(
-    () =>
-      sortedEntries.filter(
-        (entry) => entry.published !== false && entry.draft !== true,
-      ),
-    [sortedEntries],
-  );
   const filteredEntries = useMemo(
     () => filterEntries(sortedEntries, entryAppliedFilters),
     [entryAppliedFilters, sortedEntries],
@@ -814,39 +806,6 @@ export default function CanisWorldPage() {
     setEntryDraftFilters(emptyEntryFilters);
     setEntryAppliedFilters(emptyEntryFilters);
   }
-  const heroSourceEntry = useMemo(() => {
-    const selectedId = settings?.content?.heroEntryId;
-    return (
-      publishedEntries.find((entry) => entry._id === selectedId) ||
-      publishedEntries.find((entry) => entry.featured) ||
-      publishedEntries[0]
-    );
-  }, [publishedEntries, settings?.content?.heroEntryId]);
-  const heroImageOptions = heroSourceEntry?.images || [];
-  const selectedHeroImage = heroImageOptions.includes(
-    settings?.content?.heroImage,
-  )
-    ? settings.content.heroImage
-    : heroImageOptions[0] || "";
-
-  function selectHeroEntry(value) {
-    if (!value) return;
-    const heroEntryId = value === "__featured__" ? "" : value;
-    const nextEntry =
-      publishedEntries.find((entry) => entry._id === heroEntryId) ||
-      publishedEntries.find((entry) => entry.featured) ||
-      publishedEntries[0];
-
-    setSettings((current) => ({
-      ...current,
-      content: {
-        ...current.content,
-        heroEntryId,
-        heroImage: nextEntry?.images?.[0] || "",
-      },
-    }));
-  }
-
   async function moveEntry(entry, direction, visibleEntries = sortedEntries) {
     const index = visibleEntries.findIndex(
       (current) => current._id === entry._id,
@@ -1280,83 +1239,13 @@ export default function CanisWorldPage() {
                     value={settings.content?.headerLinkUrl}
                     onChange={(value) => updateContent("headerLinkUrl", value)}
                   />
-                  <div className="grid gap-3 md:col-span-2">
-                    <div className="grid max-w-2xl gap-2">
-                      <Label htmlFor="hero-entry">關聯日常紀錄</Label>
-                      <Select
-                        value={settings.content?.heroEntryId || "__featured__"}
-                        onValueChange={selectHeroEntry}
-                      >
-                        <SelectTrigger id="hero-entry" className="w-full">
-                          <SelectValue placeholder="請選擇關聯日常紀錄" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__featured__">
-                            自動使用第一筆精選日常
-                          </SelectItem>
-                          {publishedEntries.map((entry) => (
-                            <SelectItem key={entry._id} value={entry._id}>
-                              {entry.title}
-                              {entry.occurredAt
-                                ? ` · ${String(entry.occurredAt).slice(0, 10)}`
-                                : ""}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs leading-5 text-muted-foreground">
-                        主視覺卡片的分類、日期、標題與摘要會取自這筆公開日常紀錄。
-                      </p>
-                    </div>
-                    <div className="grid max-w-2xl gap-2">
-                      <Label>首頁主視覺圖片</Label>
-                      {heroImageOptions.length ? (
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                          {heroImageOptions.map((path, index) => {
-                            const selected = path === selectedHeroImage;
-                            return (
-                              <button
-                                key={`${path}-${index}`}
-                                type="button"
-                                aria-pressed={selected}
-                                aria-label={`選擇第 ${index + 1} 張照片作為首頁主視覺`}
-                                className={`relative aspect-video overflow-hidden rounded-lg border bg-muted outline-none transition-all focus-visible:ring-3 focus-visible:ring-ring/50 ${
-                                  selected
-                                    ? "border-primary ring-2 ring-primary"
-                                    : "hover:border-foreground/40"
-                                }`}
-                                onClick={() => updateContent("heroImage", path)}
-                              >
-                                <img
-                                  src={resolveImagePreview(path)}
-                                  alt={`第 ${index + 1} 張照片`}
-                                  loading="lazy"
-                                  className="absolute inset-0 size-full object-cover"
-                                />
-                                {selected ? (
-                                  <span className="absolute right-2 top-2 z-10 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
-                                    <Check className="size-4" />
-                                  </span>
-                                ) : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="grid min-h-28 place-items-center gap-2 rounded-lg border border-dashed bg-muted/15 p-6 text-center">
-                          <ImageIcon className="size-5 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
-                            這筆日常沒有照片，請先到日常紀錄加入照片。
-                          </p>
-                        </div>
-                      )}
-                      <p className="text-xs leading-5 text-muted-foreground">
-                        只能選擇關聯日常內的照片，確保主視覺與卡片內容一致。
-                      </p>
-                    </div>
+                  <div className="grid gap-2 rounded-lg border bg-muted/20 p-4 md:col-span-2">
+                    <Label>首頁主視覺</Label>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      每次載入首頁時，會從公開的精選日常隨機選一篇，使用該篇的首張照片、分類、日期、標題與摘要。請到日常紀錄管理精選項目；沒有精選時會顯示一般公開日常。
+                    </p>
                   </div>
                 </div>
-
                 <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
                   <Field
                     id="adult-title"
