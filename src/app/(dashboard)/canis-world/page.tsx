@@ -126,7 +126,7 @@ const emptyEntry = {
   priority: 100,
 };
 
-const MAX_FEATURED_ENTRIES = 2;
+const MAX_FEATURED_ENTRIES = 5;
 
 function currentDateValue() {
   const now = new Date();
@@ -913,11 +913,11 @@ export default function CanisWorldPage() {
           <DataTableColumnHeader column={column} title="標題" />
         ),
         cell: ({ row }) => (
-          <div>
-            <div className="font-medium">
+          <div className="w-[30em]">
+            <div className="truncate font-medium" title={row.original.title || "未命名草稿"}>
               {row.original.title || "未命名草稿"}
             </div>
-            <div className="line-clamp-1 text-xs text-muted-foreground">
+            <div className="truncate text-xs text-muted-foreground" title={row.original.excerpt || "尚未填寫摘要"}>
               {row.original.excerpt || "尚未填寫摘要"}
             </div>
           </div>
@@ -1855,7 +1855,7 @@ export default function CanisWorldPage() {
                     <FieldContent>
                       <span className="text-sm font-medium">設為精選</span>
                       <FieldDescription>
-                        會出現在首頁的精選日常區塊；未勾選仍會保留在所有貼文與資料表。
+                        最多可設定 {MAX_FEATURED_ENTRIES} 篇，會出現在首頁的精選日常區塊；未勾選仍會保留在所有貼文與資料表。
                       </FieldDescription>
                     </FieldContent>
                   </CheckboxField>
