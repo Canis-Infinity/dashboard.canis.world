@@ -731,7 +731,7 @@ export function ContentCollections({
         open={Boolean(editor)}
         onOpenChange={(open) => !open && setEditor(null)}
       >
-        <DialogContent className="grid max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 sm:max-w-xl">
+        <DialogContent className="grid max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>
               {editor?.id ? "編輯" : "新增"}

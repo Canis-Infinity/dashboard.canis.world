@@ -1047,7 +1047,7 @@ export default function EntriesPage() {
       )}
 
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="grid h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 max-sm:left-0 max-sm:top-0 max-sm:h-svh max-sm:max-h-svh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0">
+        <DialogContent className="grid h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 max-sm:left-0 max-sm:top-0 max-sm:h-svh max-sm:max-h-svh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0">
           <DialogHeader className="min-w-0 px-4 pt-4 pr-12 text-left sm:px-6 sm:pt-6">
             <DialogTitle>{editingId ? "編輯日常" : "新增日常"}</DialogTitle>
             <DialogDescription className="text-pretty">
@@ -1149,7 +1149,7 @@ export default function EntriesPage() {
                             src={resolveImagePreview(path)}
                             alt={`${draft.title || "日常"}的第 ${index + 1} 張照片`}
                             fill
-                            sizes="(min-width: 1024px) 240px, (min-width: 640px) 480px, calc(100vw - 80px)"
+                            sizes="(min-width: 1024px) 260px, (min-width: 640px) 528px, calc(100vw - 32px)"
                             loading="lazy"
                             className="object-cover"
                           />
