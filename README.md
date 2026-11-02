@@ -32,6 +32,17 @@ INTERNAL_API_BASE_URL=http://host.docker.internal:7344
 
 ## Docker
 
+正式伺服器已於 2026-11-02 記錄遷移至 `root@211.21.92.115:22`，部署目錄為 `/home/dashboard.canis.world`。
+
+```bash
+ssh root@211.21.92.115
+cd /home/dashboard.canis.world
+git pull --ff-only
+docker compose up -d --force-recreate
+```
+
+容器啟動後會安裝依賴並建置，需等待健康狀態為 healthy，再確認 `https://dashboard.canis.world/login` 可用。
+
 ```bash
 docker compose up -d --build
 ```
