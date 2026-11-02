@@ -3,6 +3,7 @@
 import { formatDisplayDate } from "@/utils/date";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import {
   ArrowDown,
   ArrowLeft,
@@ -1143,16 +1144,17 @@ export default function EntriesPage() {
                         key={`${path}-${index}`}
                         className="min-w-0 overflow-hidden rounded-lg border bg-muted/20"
                       >
-                        <div
-                          role="img"
-                          aria-label={`${draft.title || "日常"}的第 ${index + 1} 張照片`}
-                          className="aspect-video bg-muted bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url(${JSON.stringify(resolveImagePreview(path))})`,
-                          }}
-                        >
+                        <div className="relative aspect-video overflow-hidden bg-muted">
+                          <Image
+                            src={resolveImagePreview(path)}
+                            alt={`${draft.title || "日常"}的第 ${index + 1} 張照片`}
+                            fill
+                            sizes="(min-width: 1024px) 240px, (min-width: 640px) 480px, calc(100vw - 80px)"
+                            loading="lazy"
+                            className="object-cover"
+                          />
                           <Badge
-                            className="m-2 bg-background/85 text-foreground backdrop-blur-sm"
+                            className="relative z-10 m-2 bg-background/85 text-foreground backdrop-blur-sm"
                             variant="outline"
                           >
                             {index + 1}

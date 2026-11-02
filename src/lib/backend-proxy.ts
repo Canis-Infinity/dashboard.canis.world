@@ -30,7 +30,15 @@ export async function proxyBackend(request: NextRequest, pathname: string) {
     responseHeaders.delete('content-encoding');
     responseHeaders.delete('content-length');
     responseHeaders.delete('transfer-encoding');
-    responseHeaders.set('cache-control', 'no-store, max-age=0');
+    // Only public upload images may retain the backend's cache policy.
+    // API responses (including authenticated data) must never be cached.
+    const isUploadImage = request.method === 'GET'
+      && pathname.startsWith('/uploads/')
+      && response.ok
+      && /^image\//i.test(response.headers.get('content-type') || '');
+    responseHeaders.set('cache-control', isUploadImage
+      ? response.headers.get('cache-control') || 'public, max-age=3600'
+      : 'no-store, max-age=0');
 
     return new Response(response.body, {
       status: response.status,
