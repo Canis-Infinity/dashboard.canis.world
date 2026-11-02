@@ -275,14 +275,14 @@ function DataTable({
             <PaginationContent className="w-full gap-3 md:w-auto md:gap-1">
               <PaginationItem className="flex flex-1 md:flex-none">
                 <PaginationPrevious
-                  href="#"
+                  as="button"
+                  disabled={!canPreviousPage}
                   className={cn(
                     "h-10 flex-1 justify-center md:h-9 md:flex-none",
                     canPreviousPage ? "" : "pointer-events-none opacity-50"
                   )}
                   aria-disabled={!canPreviousPage}
-                  onClick={(event) => {
-                    event.preventDefault()
+                  onClick={() => {
                     goToPage(currentPageIndex - 1)
                   }}
                 />
@@ -299,10 +299,9 @@ function DataTable({
                 return (
                   <PaginationItem key={item} className="hidden md:block">
                     <PaginationLink
-                      href="#"
+                      as="button"
                       isActive={item === currentPageIndex}
-                      onClick={(event) => {
-                        event.preventDefault()
+                      onClick={() => {
                         goToPage(item)
                       }}
                     >
@@ -313,14 +312,14 @@ function DataTable({
               })}
               <PaginationItem className="flex flex-1 md:flex-none">
                 <PaginationNext
-                  href="#"
+                  as="button"
+                  disabled={!canNextPage}
                   className={cn(
                     "h-10 flex-1 justify-center md:h-9 md:flex-none",
                     canNextPage ? "" : "pointer-events-none opacity-50"
                   )}
                   aria-disabled={!canNextPage}
-                  onClick={(event) => {
-                    event.preventDefault()
+                  onClick={() => {
                     goToPage(currentPageIndex + 1)
                   }}
                 />
