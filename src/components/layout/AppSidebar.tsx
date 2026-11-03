@@ -47,7 +47,7 @@ const MOBILE_LOGOUT_DIALOG_DELAY_MS = 350;
 function NestedNavigation({ item, pathname }) {
   const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const active = item.children.some((child) => child.href === pathname);
-  const [expanded, setExpanded] = useState(active);
+  const [expanded, setExpanded] = useState(false);
   const Icon = item.icon;
   return (
     <SidebarMenuItem>
