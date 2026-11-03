@@ -40,7 +40,6 @@ import {
   SidebarMenuSubButton,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 const MOBILE_LOGOUT_DIALOG_DELAY_MS = 350;
 
@@ -70,9 +69,9 @@ function NestedNavigation({ item, pathname }) {
           }
         >
           <Icon className="size-4" />
-          <span>{item.title}</span>
+          <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
           <ChevronDown
-            className={`ml-auto size-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            className={`ml-auto size-4 transition-transform group-data-[collapsible=icon]:hidden ${expanded ? "rotate-180" : ""}`}
           />
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -149,12 +148,12 @@ export function AppSidebar(props) {
   return (
     <>
       <Sidebar collapsible="icon" {...props}>
-        <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0">
+        <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0 group-data-[collapsible=icon]:px-2">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 size="lg"
-                className="h-10 gap-3 px-2"
+                className="h-10 gap-3 px-2 group-data-[collapsible=icon]:justify-center"
                 render={<Link href="/" />}
               >
                 <Image
@@ -162,9 +161,9 @@ export function AppSidebar(props) {
                   alt="Canis Den"
                   width={24}
                   height={24}
-                  className="logo-theme-filter hidden size-6 object-contain group-data-[collapsible=icon]:block"
+                  className="logo-theme-filter hidden size-6 shrink-0 object-contain group-data-[collapsible=icon]:block"
                 />
-                <div className="grid flex-1 min-w-0 gap-1 leading-tight text-left">
+                <div className="grid flex-1 min-w-0 gap-1 leading-tight text-left group-data-[collapsible=icon]:hidden">
                   <span className="truncate text-base font-semibold group-data-[collapsible=icon]:hidden">
                     Canis Den
                   </span>
@@ -176,7 +175,7 @@ export function AppSidebar(props) {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
-        <SidebarContent className="px-2 py-4">
+        <SidebarContent className="px-2 py-4 group-data-[collapsible=icon]:px-0">
           {NAVIGATION_GROUPS.map((group) => (
             <SidebarGroup key={group.label}>
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
@@ -214,17 +213,21 @@ export function AppSidebar(props) {
             </SidebarGroup>
           ))}
         </SidebarContent>
-        <SidebarFooter className="p-3 border-t border-sidebar-border">
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-10 w-full justify-start gap-2 text-[15px] font-medium"
-            aria-label="登出"
-            onClick={handleLogoutDialogOpen}
-          >
-            <LogOut className="size-4" />
-            <span className="group-data-[collapsible=icon]:hidden">登出</span>
-          </Button>
+        <SidebarFooter className="p-3 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                type="button"
+                className="h-10 text-[15px] font-medium"
+                aria-label="登出"
+                tooltip="登出"
+                onClick={handleLogoutDialogOpen}
+              >
+                <LogOut className="size-4" />
+                <span className="group-data-[collapsible=icon]:hidden">登出</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
